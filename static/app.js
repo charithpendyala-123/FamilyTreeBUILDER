@@ -1,6 +1,7 @@
 // State Management
 let auth = null; // Holds login session data: { tree_id, tree_name, contributor_id, contributor_name, contributor_email }
 let selectedPersonId = null; // Currently selected person primary key ID
+let selectedRelationIds = new Set(); // Globally track related people for dimming
 let activeAction = null; // Currently showing form action name
 let network = null; // Vis.js Network instance\
 let currentPersonUpdatedAt = null; // Concurrency checking timestamp
@@ -45,7 +46,10 @@ async function preloadNodePhotos(persons) {
 }
 // Dynamic SVG Node Card Generator
 // Dynamic SVG Node Card Generator
-function createSvgNodeCard(person, isSelected) {
+function createSvgNodeCard(person, isSelected, isDimmed = false) {
+    // Override isDimmed based on global selection for consistency across async updates
+    isDimmed = selectedRelationIds.size > 0 ? !selectedRelationIds.has(person.id) : false;
+
     const borderCol = isSelected ? "#ffaa00" : (person.gender === "Male" ? "#1b6dc1" : (person.gender === "Female" ? "#c05c6e" : "#5f6368"));
     const bgCol = isSelected ? "#fffbeb" : "#ffffff";
     const headerBgCol = person.gender === "Male" ? "#1b6dc1" : (person.gender === "Female" ? "#c05c6e" : "#5f6368");
@@ -94,23 +98,25 @@ function createSvgNodeCard(person, isSelected) {
     const escNotes = escapeXml(displayNotes || "-");
 
     const svgString = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="170" viewBox="0 0 200 170">
+    <svg xmlns="http://www.w3.org/2000/svg" width="200" height="170" viewBox="0 0 200 170" opacity="${isDimmed ? '0.2' : '1.0'}">
       <defs>
         <clipPath id="circleClip_${person.id}">
           <circle cx="35" cy="55" r="25" />
         </clipPath>
       </defs>
-      <rect x="2" y="2" width="196" height="166" rx="8" ry="8" fill="${bgCol}" stroke="${borderCol}" stroke-width="4"/>
-      <rect x="2" y="2" width="196" height="10" rx="4" ry="4" fill="${headerBgCol}"/>
-      <circle cx="35" cy="55" r="27" fill="none" stroke="${borderCol}" stroke-width="2"/>
-      <image x="10" y="30" width="50" height="50" href="${imgUri}" clip-path="url(#circleClip_${person.id})"/>
-      <text x="70" y="45" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#2c3e50">${escName}</text>
-      <text x="70" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">${escDates}</text>
-      <line x1="10" y1="90" x2="190" y2="90" stroke="#eee" stroke-width="1"/>
-      <text x="15" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">✉ ${escEmail}</text>
-      <text x="15" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">📞 ${escPhone}</text>
-      <line x1="10" y1="142" x2="190" y2="142" stroke="#eee" stroke-width="1"/>
-      <text x="15" y="156" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">📝 ${escNotes}</text>
+      <g opacity="${isDimmed ? '0.2' : '1.0'}">
+        <rect x="2" y="2" width="196" height="166" rx="8" ry="8" fill="${bgCol}" stroke="${borderCol}" stroke-width="4"/>
+        <rect x="2" y="2" width="196" height="10" rx="4" ry="4" fill="${headerBgCol}"/>
+        <circle cx="35" cy="55" r="27" fill="none" stroke="${borderCol}" stroke-width="2"/>
+        <image x="10" y="30" width="50" height="50" href="${imgUri}" clip-path="url(#circleClip_${person.id})"/>
+        <text x="70" y="45" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#2c3e50">${escName}</text>
+        <text x="70" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">${escDates}</text>
+        <line x1="10" y1="90" x2="190" y2="90" stroke="#eee" stroke-width="1"/>
+        <text x="15" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">✉ ${escEmail}</text>
+        <text x="15" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">📞 ${escPhone}</text>
+        <line x1="10" y1="142" x2="190" y2="142" stroke="#eee" stroke-width="1"/>
+        <text x="15" y="156" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">📝 ${escNotes}</text>
+      </g>
     </svg>
     `;
 
@@ -351,6 +357,21 @@ function setupEventListeners() {
     document.getElementById("p-edit-deceased").addEventListener("change", (e) => {
         document.getElementById("p-edit-dod-group").style.display = e.target.checked ? "block" : "none";
     });
+
+    // Email status check listeners
+    let createEmailTimer;
+    document.getElementById("create-creator-email").addEventListener("input", (e) => {
+        clearTimeout(createEmailTimer);
+        const email = e.target.value.trim();
+        createEmailTimer = setTimeout(() => checkEmailAvailability(email, "create-email-status"), 500);
+    });
+
+    let enterEmailTimer;
+    document.getElementById("enter-contributor-email").addEventListener("input", (e) => {
+        clearTimeout(enterEmailTimer);
+        const email = e.target.value.trim();
+        enterEmailTimer = setTimeout(() => checkEmailAvailability(email, "enter-email-status"), 500);
+    });
 }
 
 // Tab Switching
@@ -377,14 +398,60 @@ function toggleEditState(tabName, isEdit) {
     }
 }
 
+// ----------------- EMAIL & OTP OPERATIONS -----------------
+
+async function checkEmailAvailability(email, statusId) {
+    const badge = document.getElementById(statusId);
+    if (!badge) return;
+    
+    if (!email) {
+        badge.textContent = "";
+        badge.className = "email-status-badge";
+        return;
+    }
+    
+    // Quick regex format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        badge.textContent = "❌ Invalid email format";
+        badge.className = "email-status-badge error";
+        return;
+    }
+    
+    try {
+        badge.textContent = "⏳ Checking database...";
+        badge.className = "email-status-badge info";
+        
+        const res = await fetch(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        
+        if (data.exists) {
+            badge.textContent = `🟢 Returning user: ${data.name} (Already in use)`;
+            badge.className = "email-status-badge success";
+        } else {
+            badge.textContent = "✨ New Contributor (Available)";
+            badge.className = "email-status-badge info";
+        }
+    } catch (err) {
+        badge.textContent = "";
+        badge.className = "email-status-badge";
+    }
+}
+
 // ----------------- API OPERATIONS -----------------
 
 async function handleCreateTree(e) {
     e.preventDefault();
-    const tree_name = document.getElementById("create-tree-name").value;
+    const tree_name = document.getElementById("create-tree-name").value.trim();
     const password = document.getElementById("create-tree-pw").value;
-    const creator_name = document.getElementById("create-creator-name").value;
-    const creator_email = document.getElementById("create-creator-email").value;
+    const creator_name = document.getElementById("create-creator-name").value.trim();
+    const creator_email = document.getElementById("create-creator-email").value.trim();
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Creating Tree...";
 
     try {
         const res = await fetch("/api/trees/create", {
@@ -392,7 +459,14 @@ async function handleCreateTree(e) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tree_name, password, creator_name, creator_email })
         });
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) {
+            const errText = await res.text();
+            let detail = "Failed to create tree.";
+            try {
+                detail = JSON.parse(errText).detail || detail;
+            } catch(ex) {}
+            throw new Error(detail);
+        }
         auth = await res.json();
         localStorage.setItem("auth", JSON.stringify(auth));
         selectedPersonId = auth.selected_person_id;
@@ -400,15 +474,23 @@ async function handleCreateTree(e) {
         showPage("dashboard");
     } catch (err) {
         showFeedback(err.message || "Failed to create tree.", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
     }
 }
 
 async function handleEnterTree(e) {
     e.preventDefault();
-    const tree_name = document.getElementById("enter-tree-name").value;
+    const tree_name = document.getElementById("enter-tree-name").value.trim();
     const password = document.getElementById("enter-tree-pw").value;
-    const contributor_name = document.getElementById("enter-contributor-name").value;
-    const contributor_email = document.getElementById("enter-contributor-email").value;
+    const contributor_name = document.getElementById("enter-contributor-name").value.trim();
+    const contributor_email = document.getElementById("enter-contributor-email").value.trim();
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Entering Tree...";
 
     try {
         const res = await fetch("/api/trees/enter", {
@@ -416,13 +498,23 @@ async function handleEnterTree(e) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ tree_name, password, contributor_name, contributor_email })
         });
-        if (!res.ok) throw new Error(await res.text());
+        if (!res.ok) {
+            const errText = await res.text();
+            let detail = "Failed to enter tree.";
+            try {
+                detail = JSON.parse(errText).detail || detail;
+            } catch(ex) {}
+            throw new Error(detail);
+        }
         auth = await res.json();
         localStorage.setItem("auth", JSON.stringify(auth));
         showFeedback(auth.message);
         showPage("dashboard");
     } catch (err) {
-        showFeedback("Invalid Tree Name or Password.", "error");
+        showFeedback(err.message || "Failed to enter tree.", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
     }
 }
 
@@ -711,10 +803,40 @@ function renderVisGraph(persons, relationships) {
         });
     });
 
+    // Calculate relation IDs if a node is selected
+    selectedRelationIds.clear();
+    const activeSelectedId = selectedPersonId;
+    if (activeSelectedId && persons.some(p => p.id === activeSelectedId)) {
+        selectedRelationIds.add(activeSelectedId);
+        
+        // 1. Partners, parents, children, or siblings connected directly via edges
+        relationships.forEach(r => {
+            if (r.person1_id === activeSelectedId) {
+                selectedRelationIds.add(r.person2_id);
+            } else if (r.person2_id === activeSelectedId) {
+                selectedRelationIds.add(r.person1_id);
+            }
+        });
+        
+        // 2. Siblings who share parents with the selected node
+        const parents = new Set();
+        relationships.forEach(r => {
+            if (r.relationship_type === "parent-child" && r.person2_id === activeSelectedId) {
+                parents.add(r.person1_id);
+            }
+        });
+        relationships.forEach(r => {
+            if (r.relationship_type === "parent-child" && parents.has(r.person1_id)) {
+                selectedRelationIds.add(r.person2_id);
+            }
+        });
+    }
+
     // Map Persons to Vis.js nodes using the SVG Card
     persons.forEach(p => {
         const isSelected = p.id === selectedPersonId;
-        const cardUrl = createSvgNodeCard(p, isSelected);
+        const isDimmed = selectedRelationIds.size > 0 ? !selectedRelationIds.has(p.id) : false;
+        const cardUrl = createSvgNodeCard(p, isSelected, isDimmed);
 
         nodesArray.push({
             id: p.id,
@@ -731,16 +853,22 @@ function renderVisGraph(persons, relationships) {
     // Map Relationships to Vis.js edges
     relationships.forEach(r => {
         const isEdgeHidden = hiddenNodeIds.has(r.person1_id) || hiddenNodeIds.has(r.person2_id);
+        const isDimmedEdge = selectedRelationIds.size > 0 ? !(selectedRelationIds.has(r.person1_id) && selectedRelationIds.has(r.person2_id)) : false;
+        const edgeWidth = isDimmedEdge ? 1 : 2;
+
         if (r.relationship_type === "parent-child") {
             const isAdoptive = r.relationship_subtype === "adoptive";
-            const edgeColor = isAdoptive ? "#27ae60" : "#1b6dc1";
+            let edgeColor = isAdoptive ? "#27ae60" : "#1b6dc1";
+            if (isDimmedEdge) {
+                edgeColor = "rgba(200, 200, 200, 0.35)";
+            }
             edgesArray.push({
                 from: r.person1_id,
                 to: r.person2_id,
                 arrows: "to",
                 color: { color: edgeColor, highlight: edgeColor },
-                width: 2,
-                dashes: isAdoptive,
+                width: edgeWidth,
+                dashes: isDimmedEdge ? true : isAdoptive,
                 hidden: isEdgeHidden
             });
         } else if (r.relationship_type === "partner") {
@@ -750,21 +878,28 @@ function renderVisGraph(persons, relationships) {
             } else if (r.relationship_status === "widowed") {
                 edgeColor = "#333333";
             }
+            if (isDimmedEdge) {
+                edgeColor = "rgba(200, 200, 200, 0.35)";
+            }
             edgesArray.push({
                 from: r.person1_id,
                 to: r.person2_id,
                 color: { color: edgeColor, highlight: edgeColor },
-                width: 2,
+                width: edgeWidth,
                 dashes: true,
                 arrows: "",
                 hidden: isEdgeHidden
             });
         } else if (r.relationship_type === "sibling") {
+            let edgeColor = "#7f8c8d";
+            if (isDimmedEdge) {
+                edgeColor = "rgba(200, 200, 200, 0.35)";
+            }
             edgesArray.push({
                 from: r.person1_id,
                 to: r.person2_id,
-                color: { color: "#7f8c8d", highlight: "#7f8c8d" },
-                width: 2,
+                color: { color: edgeColor, highlight: edgeColor },
+                width: edgeWidth,
                 dashes: true,
                 arrows: "",
                 hidden: isEdgeHidden
@@ -792,6 +927,25 @@ function renderVisGraph(persons, relationships) {
         if (params.nodes.length > 0) {
             selectedPersonId = parseInt(params.nodes[0]);
             loadDashboard();
+        }
+    });
+
+    network.on("click", (params) => {
+        // If the user clicked on the background (no nodes selected)
+        if (params.nodes.length === 0) {
+            selectedPersonId = null;
+            // Hide profile details and show a friendly empty state
+            document.getElementById("profile-panel-view").style.display = "none";
+            document.getElementById("empty-panel-view").style.display = "block";
+            const infoAlert = document.querySelector("#empty-panel-view .info-alert");
+            if (infoAlert) {
+                infoAlert.textContent = "💡 Click on any member in the family tree to view their personal details and highlight their relationships.";
+            }
+            const firstMemberForm = document.getElementById("first-member-form");
+            if (firstMemberForm) firstMemberForm.style.display = "none";
+            
+            // Re-render graph with no selection (everyone normal)
+            renderVisGraph(persons, relationships);
         }
     });
 

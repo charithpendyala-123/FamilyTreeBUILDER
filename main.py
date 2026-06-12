@@ -6,6 +6,13 @@ from typing import Optional, List
 import os
 import shutil
 from datetime import datetime
+import socket
+import random
+import time
+import re
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 import database as db
 
@@ -25,6 +32,42 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 
 # Mount media static files (served at /media/filename)
 app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
+
+# Load .env file manually to support zero-dependency environments
+def load_env():
+    env_path = os.path.join(BASE_DIR, ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" in line:
+                    key, val = line.split("=", 1)
+                    os.environ[key.strip()] = val.strip().strip('"').strip("'")
+
+load_env()
+
+def is_online() -> bool:
+    try:
+        socket.gethostbyname("google.com")
+        return True
+    except socket.gaierror:
+        return False
+
+def verify_email_dns(email: str) -> bool:
+    email = email.strip()
+    if "@" not in email:
+        return False
+    domain = email.split("@")[-1].strip()
+    if not is_online():
+        print(f"⚠️ Offline: Skipping DNS check for domain {domain}")
+        return True
+    try:
+        socket.gethostbyname(domain)
+        return True
+    except socket.gaierror:
+        return False
 
 # Pydantic request models
 class TreeCreateRequest(BaseModel):
@@ -150,10 +193,38 @@ class DeletePhotoRequest(BaseModel):
     tree_id: int
     contributor_id: int
 
+class CheckEmailResponse(BaseModel):
+    exists: bool
+    name: Optional[str] = None
+
 # API Endpoint routes
+
+@app.get("/api/auth/check-email", response_model=CheckEmailResponse)
+def api_check_email(email: str):
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM Contributors WHERE email = ?", (email.strip().lower(),))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return CheckEmailResponse(exists=True, name=row["name"])
+    return CheckEmailResponse(exists=False, name=None)
 
 @app.post("/api/trees/create")
 def api_create_tree(req: TreeCreateRequest):
+    email = req.creator_email.strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required.")
+        
+    # Email regex validation (Level 1 format check)
+    email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+    if not re.match(email_regex, email):
+        raise HTTPException(status_code=400, detail="Invalid email address format.")
+    
+    # DNS Domain existence check (Level 2)
+    if not verify_email_dns(email):
+        raise HTTPException(status_code=400, detail="The email domain is invalid or cannot be resolved.")
+
     try:
         res = db.create_tree(req.tree_name, req.password, req.creator_name, req.creator_email)
         # Create first default person node for the creator
@@ -176,6 +247,19 @@ def api_create_tree(req: TreeCreateRequest):
 
 @app.post("/api/trees/enter")
 def api_enter_tree(req: TreeEnterRequest):
+    email = req.contributor_email.strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required.")
+        
+    # Email regex validation (Level 1 format check)
+    email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+    if not re.match(email_regex, email):
+        raise HTTPException(status_code=400, detail="Invalid email address format.")
+    
+    # DNS Domain existence check (Level 2)
+    if not verify_email_dns(email):
+        raise HTTPException(status_code=400, detail="The email domain is invalid or cannot be resolved.")
+
     # Check if contributor email already exists for Welcome Back rule
     conn = db.get_connection()
     cursor = conn.cursor()

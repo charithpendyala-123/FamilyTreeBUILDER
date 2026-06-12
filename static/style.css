@@ -220,6 +220,26 @@ body {
     cursor: pointer;
 }
 
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.radio-option input[type="radio"] {
+    width: auto !important;
+    margin: 0 !important;
+    cursor: pointer;
+}
+
+.radio-option label {
+    display: inline !important;
+    margin: 0 !important;
+    font-weight: normal !important;
+    cursor: pointer;
+}
+
 /* Feedback banners */
 .feedback-container {
     max-width: 95%;
@@ -714,4 +734,94 @@ body {
     font-weight: 700;
     margin-right: 6px;
     display: inline-block;
+}
+
+/* Canvas Footer and Legend Row styling */
+.canvas-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.canvas-footer .canvas-tip {
+    margin-top: 0;
+}
+
+.canvas-legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
+    align-items: center;
+    color: #555;
+    background-color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.legend-inline-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-inline-item .line-sample {
+    display: inline-block;
+    width: 20px;
+    height: 0;
+    border-top-width: 2px;
+}
+
+.legend-inline-item .line-sample.solid-blue {
+    border-top-style: solid;
+    border-top-color: #1b6dc1;
+}
+
+.legend-inline-item .line-sample.dashed-green {
+    border-top-style: dashed;
+    border-top-color: #27ae60;
+}
+
+.legend-inline-item .line-sample.dashed-pink {
+    border-top-style: dashed;
+    border-top-color: #c05c6e;
+}
+
+.legend-inline-item .line-sample.dashed-gray {
+    border-top-style: dashed;
+    border-top-color: #7f8c8d;
+}
+
+.legend-inline-item .line-sample.dashed-dark-gray {
+    border-top-style: dashed;
+    border-top-color: #333333;
+}
+
+/* Email check status badges */
+.email-status-badge {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.85em;
+    font-weight: 500;
+    min-height: 1.2em;
+}
+.email-status-badge.success {
+    color: #27ae60;
+}
+.email-status-badge.info {
+    color: #1b6dc1;
+}
+.email-status-badge.error {
+    color: #c05c6e;
+}
+
+#otp-code-input:focus {
+    border-color: var(--primary-teal) !important;
+    outline: none;
+    box-shadow: 0 0 8px rgba(27, 174, 154, 0.2);
 }

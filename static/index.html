@@ -71,6 +71,7 @@
                         <div class="form-group">
                             <label>Your Email</label>
                             <input type="email" id="create-creator-email" placeholder="e.g. john@example.com" required>
+                            <span id="create-email-status" class="email-status-badge"></span>
                         </div>
                         <button type="submit" class="submit-btn">Create Tree</button>
                     </form>
@@ -98,6 +99,7 @@
                         <div class="form-group">
                             <label>Your Email</label>
                             <input type="email" id="enter-contributor-email" placeholder="e.g. alice@example.com" required>
+                            <span id="enter-email-status" class="email-status-badge"></span>
                         </div>
                         <button type="submit" class="submit-btn">Enter Tree</button>
                     </form>
@@ -190,7 +192,7 @@
             <div class="workspace-layout">
                 
                 <!-- Left Side: Canvas -->
-                <div class="workspace-left">
+                <div class="workspace-left" style="position: relative;">
                     <div class="canvas-toolbar">
                         <button id="tb-zoom-in">🔍 Zoom In</button>
                         <button id="tb-zoom-out">🔍 Zoom Out</button>
@@ -203,7 +205,19 @@
                     <div class="canvas-container" id="tree-canvas-container">
                         <!-- Vis.js canvas renders here -->
                     </div>
-                    <div class="canvas-tip">💡 <i>Tip: Click on a person's node to select them, and double-scroll to zoom or drag to pan.</i></div>
+                    
+                    <!-- Canvas Footer: Tip & Legend Row Sibling -->
+                    <div class="canvas-footer">
+                        <div class="canvas-tip">💡 <i>Tip: Click on a person's node to select them, and double-scroll to zoom or drag to pan.</i></div>
+                        <div class="canvas-legend-row">
+                            <span style="font-weight: 600; color: var(--primary-teal); margin-right: 4px;">Relationship Key:</span>
+                            <span class="legend-inline-item"><span class="line-sample solid-blue"></span> Biological Child</span>
+                            <span class="legend-inline-item"><span class="line-sample dashed-green"></span> Adopted Child</span>
+                            <span class="legend-inline-item"><span class="line-sample dashed-pink"></span> Spouse</span>
+                            <span class="legend-inline-item"><span class="line-sample dashed-gray"></span> Sibling / Divorced</span>
+                            <span class="legend-inline-item"><span class="line-sample dashed-dark-gray"></span> Widowed</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Right Side: Editing Panel -->
