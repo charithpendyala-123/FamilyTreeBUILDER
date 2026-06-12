@@ -1,0 +1,848 @@
+{
+    "tree_name": "Large Family Tree (50 Members)",
+    "tree_type": "family",
+    "persons": [
+        {
+            "id": 1,
+            "first_name": "Ram",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1940-05-10",
+            "deceased": 0
+        },
+        {
+            "id": 2,
+            "first_name": "Shanti",
+            "surname_now": "Devi",
+            "gender": "Female",
+            "birth_date": "1942-08-15",
+            "deceased": 0
+        },
+        {
+            "id": 3,
+            "first_name": "Mohan",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1965-03-20",
+            "deceased": 0
+        },
+        {
+            "id": 4,
+            "first_name": "Suresh",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1967-07-22",
+            "deceased": 0
+        },
+        {
+            "id": 5,
+            "first_name": "Rakesh",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1969-11-05",
+            "deceased": 0
+        },
+        {
+            "id": 6,
+            "first_name": "Mahesh",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1971-09-12",
+            "deceased": 0
+        },
+        {
+            "id": 7,
+            "first_name": "Sunita",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1973-12-01",
+            "deceased": 0
+        },
+        {
+            "id": 8,
+            "first_name": "Kavita",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1966-02-14",
+            "deceased": 0
+        },
+        {
+            "id": 9,
+            "first_name": "Rahul",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1989-01-25",
+            "deceased": 0
+        },
+        {
+            "id": 10,
+            "first_name": "Priya",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1991-04-18",
+            "deceased": 0
+        },
+        {
+            "id": 11,
+            "first_name": "Amit",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1993-06-30",
+            "deceased": 0
+        },
+        {
+            "id": 12,
+            "first_name": "Meena",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1968-10-10",
+            "deceased": 0
+        },
+        {
+            "id": 13,
+            "first_name": "Karan",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1990-03-15",
+            "deceased": 0
+        },
+        {
+            "id": 14,
+            "first_name": "Neha",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1992-05-20",
+            "deceased": 0
+        },
+        {
+            "id": 15,
+            "first_name": "Deepak",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1994-08-12",
+            "deceased": 0
+        },
+        {
+            "id": 16,
+            "first_name": "Pooja",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1970-04-05",
+            "deceased": 0
+        },
+        {
+            "id": 17,
+            "first_name": "Arjun",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1991-12-01",
+            "deceased": 0
+        },
+        {
+            "id": 18,
+            "first_name": "Sneha",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1993-02-10",
+            "deceased": 0
+        },
+        {
+            "id": 19,
+            "first_name": "Rohan",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1995-07-07",
+            "deceased": 0
+        },
+        {
+            "id": 20,
+            "first_name": "Anita",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1972-01-20",
+            "deceased": 0
+        },
+        {
+            "id": 21,
+            "first_name": "Varun",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1992-09-18",
+            "deceased": 0
+        },
+        {
+            "id": 22,
+            "first_name": "Simran",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1994-11-22",
+            "deceased": 0
+        },
+        {
+            "id": 23,
+            "first_name": "Akash",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1996-05-14",
+            "deceased": 0
+        },
+        {
+            "id": 24,
+            "first_name": "Rajesh",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1972-06-30",
+            "deceased": 0
+        },
+        {
+            "id": 25,
+            "first_name": "Pankaj",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1993-04-10",
+            "deceased": 0
+        },
+        {
+            "id": 26,
+            "first_name": "Nidhi",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1995-08-25",
+            "deceased": 0
+        },
+        {
+            "id": 27,
+            "first_name": "Tanya",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1997-10-30",
+            "deceased": 0
+        },
+        {
+            "id": 28,
+            "first_name": "Aisha",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1990-12-12",
+            "deceased": 0
+        },
+        {
+            "id": 29,
+            "first_name": "Aarav",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "2014-03-03",
+            "deceased": 0
+        },
+        {
+            "id": 30,
+            "first_name": "Diya",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "2016-06-06",
+            "deceased": 0
+        },
+        {
+            "id": 31,
+            "first_name": "Vivek",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1990-09-09",
+            "deceased": 0
+        },
+        {
+            "id": 32,
+            "first_name": "Kabir",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "2015-02-12",
+            "deceased": 0
+        },
+        {
+            "id": 33,
+            "first_name": "Siya",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "2017-05-15",
+            "deceased": 0
+        },
+        {
+            "id": 34,
+            "first_name": "Ritu",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1994-01-01",
+            "deceased": 0
+        },
+        {
+            "id": 35,
+            "first_name": "Aryan",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "2017-07-20",
+            "deceased": 0
+        },
+        {
+            "id": 36,
+            "first_name": "Anaya",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "2019-10-25",
+            "deceased": 0
+        },
+        {
+            "id": 37,
+            "first_name": "Sonia",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1991-03-10",
+            "deceased": 0
+        },
+        {
+            "id": 38,
+            "first_name": "Ishaan",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "2015-11-12",
+            "deceased": 0
+        },
+        {
+            "id": 39,
+            "first_name": "Myra",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "2017-12-14",
+            "deceased": 0
+        },
+        {
+            "id": 40,
+            "first_name": "Rohit",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "1991-05-18",
+            "deceased": 0
+        },
+        {
+            "id": 41,
+            "first_name": "Advik",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "2016-08-08",
+            "deceased": 0
+        },
+        {
+            "id": 42,
+            "first_name": "Kiara",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "2018-09-09",
+            "deceased": 0
+        },
+        {
+            "id": 43,
+            "first_name": "Priti",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1992-04-12",
+            "deceased": 0
+        },
+        {
+            "id": 44,
+            "first_name": "Ved",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "2016-10-10",
+            "deceased": 0
+        },
+        {
+            "id": 45,
+            "first_name": "Tara",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "2018-11-11",
+            "deceased": 0
+        },
+        {
+            "id": 46,
+            "first_name": "Mehak",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1993-05-05",
+            "deceased": 0
+        },
+        {
+            "id": 47,
+            "first_name": "Reyansh",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "2018-04-20",
+            "deceased": 0
+        },
+        {
+            "id": 48,
+            "first_name": "Aanya",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "2020-07-22",
+            "deceased": 0
+        },
+        {
+            "id": 49,
+            "first_name": "Komal",
+            "surname_now": "Singh",
+            "gender": "Female",
+            "birth_date": "1994-08-08",
+            "deceased": 0
+        },
+        {
+            "id": 50,
+            "first_name": "Dhruv",
+            "surname_now": "Singh",
+            "gender": "Male",
+            "birth_date": "2019-12-12",
+            "deceased": 0
+        }
+    ],
+    "relationships": [
+        {
+            "person1_id": 1,
+            "person2_id": 2,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 1,
+            "person2_id": 3,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 2,
+            "person2_id": 3,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 1,
+            "person2_id": 4,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 2,
+            "person2_id": 4,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 1,
+            "person2_id": 5,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 2,
+            "person2_id": 5,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 1,
+            "person2_id": 6,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 2,
+            "person2_id": 6,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 1,
+            "person2_id": 7,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 2,
+            "person2_id": 7,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 3,
+            "person2_id": 8,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 3,
+            "person2_id": 9,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 8,
+            "person2_id": 9,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 3,
+            "person2_id": 10,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 8,
+            "person2_id": 10,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 3,
+            "person2_id": 11,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 8,
+            "person2_id": 11,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 4,
+            "person2_id": 12,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 4,
+            "person2_id": 13,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 12,
+            "person2_id": 13,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 4,
+            "person2_id": 14,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 12,
+            "person2_id": 14,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 4,
+            "person2_id": 15,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 12,
+            "person2_id": 15,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 5,
+            "person2_id": 16,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 5,
+            "person2_id": 17,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 16,
+            "person2_id": 17,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 5,
+            "person2_id": 18,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 16,
+            "person2_id": 18,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 5,
+            "person2_id": 19,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 16,
+            "person2_id": 19,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 6,
+            "person2_id": 20,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 6,
+            "person2_id": 21,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 20,
+            "person2_id": 21,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 6,
+            "person2_id": 22,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 20,
+            "person2_id": 22,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 6,
+            "person2_id": 23,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 20,
+            "person2_id": 23,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 7,
+            "person2_id": 24,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 7,
+            "person2_id": 25,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 24,
+            "person2_id": 25,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 7,
+            "person2_id": 26,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 24,
+            "person2_id": 26,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 7,
+            "person2_id": 27,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 24,
+            "person2_id": 27,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 9,
+            "person2_id": 28,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 9,
+            "person2_id": 29,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 28,
+            "person2_id": 29,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 9,
+            "person2_id": 30,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 28,
+            "person2_id": 30,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 10,
+            "person2_id": 31,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 10,
+            "person2_id": 32,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 31,
+            "person2_id": 32,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 10,
+            "person2_id": 33,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 31,
+            "person2_id": 33,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 11,
+            "person2_id": 34,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 11,
+            "person2_id": 35,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 34,
+            "person2_id": 35,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 11,
+            "person2_id": 36,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 34,
+            "person2_id": 36,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 13,
+            "person2_id": 37,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 13,
+            "person2_id": 38,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 37,
+            "person2_id": 38,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 13,
+            "person2_id": 39,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 37,
+            "person2_id": 39,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 14,
+            "person2_id": 40,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 14,
+            "person2_id": 41,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 40,
+            "person2_id": 41,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 14,
+            "person2_id": 42,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 40,
+            "person2_id": 42,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 17,
+            "person2_id": 43,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 17,
+            "person2_id": 44,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 43,
+            "person2_id": 44,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 17,
+            "person2_id": 45,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 43,
+            "person2_id": 45,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 21,
+            "person2_id": 46,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 21,
+            "person2_id": 47,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 46,
+            "person2_id": 47,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 21,
+            "person2_id": 48,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 46,
+            "person2_id": 48,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 25,
+            "person2_id": 49,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        },
+        {
+            "person1_id": 25,
+            "person2_id": 50,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 49,
+            "person2_id": 50,
+            "relationship_type": "parent-child"
+        },
+        {
+            "person1_id": 18,
+            "person2_id": 23,
+            "relationship_type": "partner",
+            "relationship_status": "active"
+        }
+    ]
+}

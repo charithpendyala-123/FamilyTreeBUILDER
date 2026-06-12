@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Tree Builder</title>
+    <!-- Modern font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Standalone Vis.js Network Library for tree canvas -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="style.css?v=1.1">
+</head>
+<body>
+
+    <!-- Top Navigation Header -->
+    <header class="custom-header">
+        <div class="header-logo">
+            <span class="logo-icon">🌳</span>
+            <h1>FAMILY TREE BUILDER</h1>
+        </div>
+                <div class="header-nav-container" id="nav-dropdown-container" style="display: none;">
+            <div class="custom-dropdown" id="header-custom-dropdown">
+                <button class="dropdown-trigger" id="dropdown-email-trigger">
+                    <span id="user-email-display">user@example.com</span>
+                    <span class="dropdown-arrow">▼</span>
+                </button>
+                <div class="dropdown-menu">
+                    <button class="dropdown-item" data-value="dashboard"><span class="current-indicator" style="display: none;">currently at:- </span>Dashboard</button>
+                    <button class="dropdown-item" data-value="my_trees"><span class="current-indicator" style="display: none;">currently at:- </span>My Trees</button>
+                    <button class="dropdown-item" data-value="settings"><span class="current-indicator" style="display: none;">currently at:- </span>Tree Settings</button>
+                    <button class="dropdown-item" data-value="logout">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Success/Error Feedback Banners -->
+    <div id="feedback-container" class="feedback-container"></div>
+
+    <main class="main-container">
+
+        <!-- 1. LANDING PAGE VIEW -->
+        <section id="page-landing" class="page-section">
+            <div id="landing-choice-view" class="landing-choice-view">
+                <h2>What do you want to do?</h2>
+                <div class="landing-buttons">
+                    <button class="landing-btn" id="btn-show-create">🌳 Create New Tree</button>
+                    <button class="landing-btn" id="btn-show-enter">✏️ Edit Existing Tree</button>
+                </div>
+            </div>
+
+            <!-- Create Tree Form View -->
+            <div id="landing-create-view" class="landing-form-view" style="display: none;">
+                <button class="back-btn" id="btn-back-create">← Back</button>
+                <div class="landing-card">
+                    <h3>Set up a collaborative Family Tree</h3>
+                    <form id="create-tree-form">
+                        <div class="form-group">
+                            <label>Family Tree Name</label>
+                            <input type="text" id="create-tree-name" placeholder="e.g. Smith Family" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Family Tree Password</label>
+                            <input type="password" id="create-tree-pw" placeholder="Enter secure password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Name</label>
+                            <input type="text" id="create-creator-name" placeholder="e.g. John Smith" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Email</label>
+                            <input type="email" id="create-creator-email" placeholder="e.g. john@example.com" required>
+                        </div>
+                        <button type="submit" class="submit-btn">Create Tree</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Enter Tree Form View -->
+            <div id="landing-enter-view" class="landing-form-view" style="display: none;">
+                <button class="back-btn" id="btn-back-enter">← Back</button>
+                <div class="landing-card">
+                    <h3>Access an existing Family Tree</h3>
+                    <form id="enter-tree-form">
+                        <div class="form-group">
+                            <label>Family Tree Name</label>
+                            <input type="text" id="enter-tree-name" placeholder="Enter the exact tree name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Family Tree Password</label>
+                            <input type="password" id="enter-tree-pw" placeholder="Enter tree password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Name</label>
+                            <input type="text" id="enter-contributor-name" placeholder="e.g. Alice Smith" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Your Email</label>
+                            <input type="email" id="enter-contributor-email" placeholder="e.g. alice@example.com" required>
+                        </div>
+                        <button type="submit" class="submit-btn">Enter Tree</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. MY TREES PAGE VIEW -->
+        <section id="page-my-trees" class="page-section" style="display: none;">
+            <h2>My Trees</h2>
+            <p>Here are all the family trees you have participated in:</p>
+            <div id="my-trees-list"></div>
+            <button class="back-btn mt-20" id="btn-mytrees-back">Back to Dashboard</button>
+        </section>
+
+        <!-- 3. TREE SETTINGS PAGE VIEW -->
+        <section id="page-settings" class="page-section" style="display: none;">
+            <h2>Tree Settings</h2>
+            <div class="settings-grid">
+                <div class="settings-left">
+                    <h3>Modify Tree Details</h3>
+                    <form id="settings-details-form">
+                        <div class="form-group">
+                            <label>Change Tree Name</label>
+                            <input type="text" id="settings-tree-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Change Tree Password (Optional)</label>
+                            <input type="password" id="settings-tree-pw" placeholder="Leave blank to keep current">
+                        </div>
+                        <div class="form-group">
+                            <label>Relationship Rules (Tree Type)</label>
+                            <div class="radio-group" style="flex-direction: column; gap: 8px;">
+                                <label style="font-weight: normal; cursor: pointer; display: flex; align-items: flex-start; gap: 8px;">
+                                    <input type="radio" name="settings-tree-type" value="family" id="tree-type-family" checked style="width: auto; margin-top: 4px;">
+                                    <span>
+                                        <strong>Standard Family Tree Mode</strong><br>
+                                        <small style="color: #666;">Prevents circular ancestry loops (a person cannot be their own ancestor/descendant).</small>
+                                    </span>
+                                </label>
+                                <label style="font-weight: normal; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; margin-top: 8px;">
+                                    <input type="radio" name="settings-tree-type" value="mythology" id="tree-type-mythology" style="width: auto; margin-top: 4px;">
+                                    <span>
+                                        <strong>Mythology / Fiction Mode</strong><br>
+                                        <small style="color: #666;">Allows symbolic, fictional, or circular relationships (e.g. self-ancestry loops).</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="submit-btn">Save Settings</button>
+                    </form>
+                    <hr class="divider">
+                    <h3>Backup & Portability</h3>
+                    <button class="action-btn" id="btn-export-tree">📤 Export Tree (JSON)</button>
+                    <div class="import-section">
+                        <h4>Import Tree Data</h4>
+                        <div class="form-group">
+                            <input type="file" id="import-file-input" accept=".json">
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="import-tree-name" placeholder="New Tree Name for Import">
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="import-tree-pw" placeholder="New Tree Password">
+                        </div>
+                        <div class="form-group">
+                            <label>Relationship Rules for Import</label>
+                            <select id="import-tree-type" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid var(--border-light);">
+                                <option value="family">Standard Family Tree Mode</option>
+                                <option value="mythology">Mythology / Fiction Mode</option>
+                            </select>
+                        </div>
+                        <button class="action-btn" id="btn-import-tree">📥 Import Now</button>
+                    </div>
+                </div>
+                <div class="settings-right" id="settings-stats-view">
+                    <h3>Display Statistics</h3>
+                    <!-- Dynamically populated stats -->
+                </div>
+            </div>
+            <button class="back-btn mt-20" id="btn-settings-back">Back to Dashboard</button>
+        </section>
+
+        <!-- 4. MAIN APPLICATION DASHBOARD VIEW -->
+        <section id="page-dashboard" class="page-section" style="display: none;">
+            
+
+
+            <!-- Workspace: Left Canvas (70%), Right Panel (30%) -->
+            <div class="workspace-layout">
+                
+                <!-- Left Side: Canvas -->
+                <div class="workspace-left">
+                    <div class="canvas-toolbar">
+                        <button id="tb-zoom-in">🔍 Zoom In</button>
+                        <button id="tb-zoom-out">🔍 Zoom Out</button>
+                        <button id="tb-fit">🎯 Fit Tree</button>
+                        <button id="tb-refresh">🔄 Refresh</button>
+                        <button id="tb-export">📥 Export JSON</button>
+                        <button id="tb-undo" disabled>↩️ Undo</button>
+                        <button id="tb-redo" disabled>↪️ Redo</button>
+                    </div>
+                    <div class="canvas-container" id="tree-canvas-container">
+                        <!-- Vis.js canvas renders here -->
+                    </div>
+                    <div class="canvas-tip">💡 <i>Tip: Click on a person's node to select them, and double-scroll to zoom or drag to pan.</i></div>
+                </div>
+
+                <!-- Right Side: Editing Panel -->
+                <div class="workspace-right">
+                    <div id="empty-panel-view">
+                        <div class="info-alert">No members present. Please add your first member.</div>
+                        <h3>Add First Tree Member</h3>
+                        <form id="first-member-form">
+                            <div class="form-group">
+                                <label>First Name</label>
+                                <input type="text" id="first-member-fname" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Surname Now</label>
+                                <input type="text" id="first-member-sname">
+                            </div>
+                            <div class="form-group">
+                                <label>Gender</label>
+                                <select id="first-member-gender">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth</label>
+                                <input type="date" id="first-member-dob" required>
+                            </div>
+                            <button type="submit" class="submit-btn">Add Member</button>
+                        </form>
+                    </div>
+
+                    <div id="profile-panel-view" style="display: none;">
+                        <h2 id="profile-header-name">👤 Person Name</h2>
+
+                        <!-- Profile Tabs -->
+                        <div class="profile-tabs">
+                            <button class="tab-link active" onclick="switchTab(event, 'tab-personal')">PERSONAL</button>
+                            <button class="tab-link" onclick="switchTab(event, 'tab-biography')">BIOGRAPHY</button>
+                            <button class="tab-link" onclick="switchTab(event, 'tab-image')">IMAGE</button>
+                        </div>
+
+                        <!-- Tab contents -->
+                        <div class="tab-content-container">
+                            
+                            <!-- PERSONAL TAB -->
+                            <div id="tab-personal" class="tab-content active">
+                                <!-- Read state -->
+                                <div id="personal-read-state">
+                                    <p><strong>First Name:</strong> <span id="p-read-fname">-</span></p>
+                                    <p><strong>Surname Now:</strong> <span id="p-read-sname">-</span></p>
+                                    <p><strong>Surname at Birth:</strong> <span id="p-read-sbirth">-</span></p>
+                                    <p><strong>Gender:</strong> <span id="p-read-gender">-</span></p>
+                                    <p><strong>Date of Birth:</strong> <span id="p-read-dob">-</span></p>
+                                    <div id="p-read-deceased-block" style="display: none; color: #c05c6e; font-weight: bold; margin-bottom: 10px;">
+                                        ⚠️ Deceased (Died: <span id="p-read-dod">-</span>)
+                                    </div>
+                                    <button class="edit-person-btn action-edit-btn">EDIT PERSON</button>
+                                </div>
+                                <!-- Edit state -->
+                                <div id="personal-edit-state" style="display: none;">
+                                    <h3>Edit Personal Info</h3>
+                                    <form id="edit-personal-form">
+                                        <div class="form-group">
+                                            <label>First name</label>
+                                            <input type="text" id="p-edit-fname" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Surname now</label>
+                                            <input type="text" id="p-edit-sname">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Surname at birth</label>
+                                            <input type="text" id="p-edit-sbirth">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Gender</label>
+                                            <div class="radio-group">
+                                                <input type="radio" name="p-edit-gender" value="Female" id="gen-female"><label for="gen-female">Female</label>
+                                                <input type="radio" name="p-edit-gender" value="Male" id="gen-male"><label for="gen-male">Male</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Date of birth</label>
+                                            <input type="date" id="p-edit-dob" required>
+                                        </div>
+                                        <div class="form-group-checkbox">
+                                            <input type="checkbox" id="p-edit-deceased">
+                                            <label for="p-edit-deceased">Deceased</label>
+                                        </div>
+                                        <div class="form-group" id="p-edit-dod-group" style="display: none;">
+                                            <label>Date of death</label>
+                                            <input type="date" id="p-edit-dod">
+                                        </div>
+                                        <div class="btn-row">
+                                            <button type="submit" class="submit-btn flex-1">SAVE</button>
+                                            <button type="button" class="cancel-btn flex-1" id="btn-cancel-personal">CANCEL</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                                                        <!-- BIOGRAPHY TAB -->
+                            <div id="tab-biography" class="tab-content">
+                                <!-- Read state -->
+                                <div id="biography-read-state">
+                                    <p><strong>Profession:</strong> <span id="b-read-profession">-</span></p>
+                                    <p><strong>Contact Number:</strong> <span id="b-read-phone">-</span></p>
+                                    <p><strong>Email Address:</strong> <span id="b-read-email">-</span></p>
+                                    <p><strong>Address:</strong> <span id="b-read-address">-</span></p>
+                                    <p><strong>Notes:</strong> <span id="b-read-biography">-</span></p>
+                                    <button class="edit-person-btn action-edit-btn">EDIT PERSON</button>
+                                </div>
+                                <!-- Edit state -->
+                                <div id="biography-edit-state" style="display: none;">
+                                    <h3>Edit Biography</h3>
+                                    <form id="edit-bio-form">
+                                        <div class="form-group">
+                                            <label>Profession</label>
+                                            <input type="text" id="b-edit-profession">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Contact Number</label>
+                                            <input type="text" id="b-edit-phone">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Email Address</label>
+                                            <input type="email" id="b-edit-email">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Address</label>
+                                            <textarea id="b-edit-address" rows="2"></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Notes</label>
+                                            <textarea id="b-edit-biography" rows="4" placeholder="Write anything about this person..."></textarea>
+                                        </div>
+                                        <div class="btn-row">
+                                            <button type="submit" class="submit-btn flex-1">SAVE</button>
+                                            <button type="button" class="cancel-btn flex-1" id="btn-cancel-bio">CANCEL</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div> <!-- CLOSE BIOGRAPHY TAB -->
+
+                            <!-- IMAGE TAB -->
+                            <div id="tab-image" class="tab-content">
+                                <!-- Read state -->
+                                <div id="image-read-state">
+                                    <div class="profile-image-container" id="p-read-image-container">
+                                        <!-- Image Silhouette or Photo dynamically loaded -->
+                                    </div>
+                                    <div class="btn-row">
+                                        <button class="edit-person-btn action-edit-btn flex-1">EDIT PERSON</button>
+                                        <button type="button" class="action-btn danger flex-1" id="btn-delete-image" style="display: none;">DELETE IMAGE</button>
+                                    </div>
+                                </div>
+                                <!-- Edit state -->
+                                <div id="image-edit-state" style="display: none;">
+                                    <h3>Upload Image File</h3>
+                                    <form id="edit-image-form">
+                                        <div class="form-group">
+                                            <input type="file" id="p-edit-image-file" accept="image/*" required>
+                                        </div>
+                                        <div class="btn-row">
+                                            <button type="submit" class="submit-btn flex-1">UPLOAD IMAGE</button>
+                                            <button type="button" class="cancel-btn flex-1" id="btn-cancel-image">CANCEL</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+</div> <!-- End of tabs container -->
+
+                        <!-- Family Navigation Section -->
+                        <div class="family-navigation-panel" id="family-navigation-panel" style="margin-top: 15px; padding: 12px; background: #ebf8ff; border-radius: 6px; border: 1px solid #bee3f8; display: none;">
+                            <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 13px; color: #2b6cb0;">Family Quick Navigator</h4>
+                            <div id="family-nav-links" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                        </div>
+
+                        <hr class="divider">
+
+                        <!-- Actions Section -->
+                        <div class="relationship-actions-panel">
+                            <!-- Static view of action buttons -->
+                            <div id="action-buttons-group">
+                                <button class="action-btn" id="action-btn-parents">ADD PARENTS</button>
+                                <button class="action-btn" id="action-btn-sibling">ADD SIBLING</button>
+                                <button class="action-btn" id="action-btn-partner">ADD PARTNER</button>
+                                <button class="action-btn" id="action-btn-child">ADD CHILD</button>
+                                <button class="action-btn" id="action-btn-collapse">COLLAPSE BRANCH</button>
+                                <button class="action-btn" id="action-btn-merge">MERGE PROFILES</button>
+                                <button class="action-btn danger" id="action-btn-delete">DELETE PERSON</button>
+                            </div>
+
+                            <!-- Dynamic forms when action buttons clicked -->
+                            <div id="active-action-form-container" style="display: none;">
+                                <h3 id="active-action-title">Action Title</h3>
+                                
+                                <!-- Add Parents form -->
+                                <form id="form-action-parents" style="display: none;">
+                                    <div class="form-group">
+                                        <label>Form Mode</label>
+                                        <select class="form-mode-select" id="act-parents-mode" onchange="toggleFormMode('parents')">
+                                            <option value="new">Create New Parents</option>
+                                            <option value="link_father">Link Existing Father Only</option>
+                                            <option value="link_mother">Link Existing Mother Only</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- New Parents Fields -->
+                                    <div id="act-parents-new-fields">
+                                        <div class="form-group">
+                                            <label>Father's First Name</label>
+                                            <input type="text" id="act-parents-father" onkeyup="checkNameMatches('parents', 'act-parents-father', 'match-suggest-father', 'father')">
+                                            <div id="match-suggest-father" style="margin-top: 5px; font-size: 12px; color: #2c5282; background: #ebf8ff; border: 1px solid #bee3f8; padding: 6px; border-radius: 4px; display: none;"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Mother's First Name</label>
+                                            <input type="text" id="act-parents-mother" onkeyup="checkNameMatches('parents', 'act-parents-mother', 'match-suggest-mother', 'mother')">
+                                            <div id="match-suggest-mother" style="margin-top: 5px; font-size: 12px; color: #2c5282; background: #ebf8ff; border: 1px solid #bee3f8; padding: 6px; border-radius: 4px; display: none;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Link Existing Parent Dropdowns -->
+                                    <div id="act-parents-link-fields" style="display: none;">
+                                        <div class="form-group" id="act-parents-link-father-group" style="display: none;">
+                                            <label>Select Existing Father</label>
+                                            <select id="act-parents-select-father" class="existing-persons-select"></select>
+                                        </div>
+                                        <div class="form-group" id="act-parents-link-mother-group" style="display: none;">
+                                            <label>Select Existing Mother</label>
+                                            <select id="act-parents-select-mother" class="existing-persons-select"></select>
+                                        </div>
+                                    </div>
+
+                                    <div class="btn-row">
+                                        <button type="submit" class="submit-btn flex-1">SUBMIT</button>
+                                        <button type="button" class="cancel-btn flex-1 btn-action-cancel">CANCEL</button>
+                                    </div>
+                                </form>
+
+                                <!-- Add Sibling form -->
+                                <form id="form-action-sibling" style="display: none;">
+                                    <div class="form-group">
+                                        <label>Form Mode</label>
+                                        <select class="form-mode-select" id="act-sibling-mode" onchange="toggleFormMode('sibling')">
+                                            <option value="new">Create New Sibling</option>
+                                            <option value="link">Link Existing Person as Sibling</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div id="act-sibling-new-fields">
+                                        <div class="form-group">
+                                            <label>Sibling's First Name</label>
+                                            <input type="text" id="act-sibling-name" onkeyup="checkNameMatches('sibling', 'act-sibling-name', 'match-suggest-sibling', 'sibling')">
+                                            <div id="match-suggest-sibling" style="margin-top: 5px; font-size: 12px; color: #2c5282; background: #ebf8ff; border: 1px solid #bee3f8; padding: 6px; border-radius: 4px; display: none;"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Sibling's Gender</label>
+                                            <select id="act-sibling-gender">
+                                                <option value="Female">Female</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div id="act-sibling-link-fields" style="display: none;">
+                                        <div class="form-group">
+                                            <label>Select Sibling</label>
+                                            <select id="act-sibling-select-person" class="existing-persons-select"></select>
+                                        </div>
+                                    </div>
+
+                                    <div class="btn-row">
+                                        <button type="submit" class="submit-btn flex-1">SUBMIT</button>
+                                        <button type="button" class="cancel-btn flex-1 btn-action-cancel">CANCEL</button>
+                                    </div>
+                                </form>
+
+                                <!-- Add Partner form -->
+                                <form id="form-action-partner" style="display: none;">
+                                    <div class="form-group">
+                                        <label>Form Mode</label>
+                                        <select class="form-mode-select" id="act-partner-mode" onchange="toggleFormMode('partner')">
+                                            <option value="new">Create New Partner</option>
+                                            <option value="link">Link Existing Person as Partner</option>
+                                            <option value="update_status">Update Status of Existing Partner</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div id="act-partner-new-fields">
+                                        <div class="form-group">
+                                            <label>Partner's First Name</label>
+                                            <input type="text" id="act-partner-name" onkeyup="checkNameMatches('partner', 'act-partner-name', 'match-suggest-partner', 'partner')">
+                                            <div id="match-suggest-partner" style="margin-top: 5px; font-size: 12px; color: #2c5282; background: #ebf8ff; border: 1px solid #bee3f8; padding: 6px; border-radius: 4px; display: none;"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Partner's Gender</label>
+                                            <select id="act-partner-gender">
+                                                <option value="Female">Female</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div id="act-partner-link-fields" style="display: none;">
+                                        <div class="form-group">
+                                            <label>Select Partner</label>
+                                            <select id="act-partner-select-person" class="existing-persons-select"></select>
+                                        </div>
+                                    </div>
+
+                                    <div id="act-partner-update-fields" style="display: none;">
+                                        <div class="form-group">
+                                            <label>Select Partner to Update</label>
+                                            <select id="act-partner-select-existing" class="existing-persons-select"></select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Relationship Type</label>
+                                        <select id="act-partner-subtype">
+                                            <option value="biological">Standard Partnership</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>Relationship Status</label>
+                                        <select id="act-partner-status">
+                                            <option value="active">Married / Active</option>
+                                            <option value="divorced">Divorced</option>
+                                            <option value="widowed">Widowed</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="btn-row">
+                                        <button type="submit" class="submit-btn flex-1">SUBMIT</button>
+                                        <button type="button" class="cancel-btn flex-1 btn-action-cancel">CANCEL</button>
+                                    </div>
+                                </form>
+
+                                <!-- Add Child form -->
+                                <form id="form-action-child" style="display: none;">
+                                    <div class="form-group">
+                                        <label>Form Mode</label>
+                                        <select class="form-mode-select" id="act-child-mode" onchange="toggleFormMode('child')">
+                                            <option value="new">Create New Child</option>
+                                            <option value="link">Link Existing Person as Child</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="act-child-partner-options-container" class="form-group">
+                                        <label>Choose Relationship Options</label>
+                                        <div id="act-child-radio-group">
+                                            <!-- Dynamically injected partner options -->
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="act-child-new-fields">
+                                        <div class="form-group">
+                                            <label>Child's First Name</label>
+                                            <input type="text" id="act-child-name" onkeyup="checkNameMatches('child', 'act-child-name', 'match-suggest-child', 'child')">
+                                            <div id="match-suggest-child" style="margin-top: 5px; font-size: 12px; color: #2c5282; background: #ebf8ff; border: 1px solid #bee3f8; padding: 6px; border-radius: 4px; display: none;"></div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Child's Gender</label>
+                                            <select id="act-child-gender">
+                                                <option value="Female">Female</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div id="act-child-link-fields" style="display: none;">
+                                        <div class="form-group">
+                                            <label>Select Child</label>
+                                            <select id="act-child-select-person" class="existing-persons-select"></select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Relationship Type</label>
+                                        <select id="act-child-subtype">
+                                            <option value="biological">Biological Child</option>
+                                            <option value="adoptive">Adopted Child</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- Dynamic new partner form fields -->
+                                    <div id="act-child-new-partner-fields" style="display: none; border-top: 1px dashed #ccc; padding-top: 10px; margin-top: 10px;">
+                                        <h4>New Partner Details</h4>
+                                        <div class="form-group">
+                                            <label>Partner First Name</label>
+                                            <input type="text" id="act-child-new-partner-name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Partner Gender</label>
+                                            <select id="act-child-new-partner-gender">
+                                                <option value="Female">Female</option>
+                                                <option value="Male">Male</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="btn-row">
+                                        <button type="submit" class="submit-btn flex-1">SUBMIT</button>
+                                        <button type="button" class="cancel-btn flex-1 btn-action-cancel">CANCEL</button>
+                                    </div>
+                                </form>
+
+                                <!-- Merge Profiles form -->
+                                <form id="form-action-merge" style="display: none;">
+                                    <p>Combine duplicate profile with another member in this tree. All relationships will move to the target.</p>
+                                    <div class="form-group">
+                                        <label>Select Target Profile (Keep this one)</label>
+                                        <select id="act-merge-select-target" class="existing-persons-select"></select>
+                                    </div>
+                                    <p>⚠️ <strong>This profile will be deleted:</strong> <span id="merge-dup-name" style="font-weight: bold;"></span></p>
+                                    <div class="btn-row">
+                                        <button type="submit" class="submit-btn flex-1 danger">CONFIRM MERGE</button>
+                                        <button type="button" class="cancel-btn flex-1 btn-action-cancel">CANCEL</button>
+                                    </div>
+                                </form>
+
+                                <!-- Delete Confirm Form -->
+                                <div id="form-action-delete" style="display: none;">
+                                    <p>⚠️ Are you sure you want to delete <strong id="delete-target-name">this person</strong>?</p>
+                                    <div class="btn-row">
+                                        <button class="submit-btn flex-1 danger" id="btn-confirm-delete">CONFIRM DELETE</button>
+                                        <button class="cancel-btn flex-1 btn-action-cancel">CANCEL</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="divider">
+
+                        <div class="activity-feed-panel">
+                            <h3>Recent Activity Feed</h3>
+                            <div class="activity-list" id="activity-feed-list"></div>
+                            <button class="view-history-trigger" id="btn-trigger-history-modal">🔍 View Full History</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Dialogs -->
+    
+    <!-- Warning Modal (Tree Split) -->
+    <div id="modal-warning" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <h3>Acknowledgment</h3>
+            <p>Deleting this person is not possible as it would result in a split in the tree. Please try removing outer people from the tree first.</p>
+            <button class="submit-btn" id="btn-warning-ok" style="width: 100px; margin-top: 15px;">OK</button>
+        </div>
+    </div>
+
+    <!-- Full History Modal -->
+    <div id="modal-history" class="modal-overlay" style="display: none;">
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <h3>Full Audit History</h3>
+                <button class="close-modal" id="btn-close-history-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-history-content">
+                <!-- Dynamically populated list -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="global-footer">
+        <!-- Renders footer links -->
+    </footer>
+
+    <!-- Main JS Application Logic -->
+    <script src="app.js?v=1.1"></script>
+</body>
+</html>
