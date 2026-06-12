@@ -197,6 +197,17 @@ class CheckEmailResponse(BaseModel):
     exists: bool
     name: Optional[str] = None
 
+class OTPRequest(BaseModel):
+    email: str
+    password: str
+    name: Optional[str] = None
+
+class OTPVerifyRequest(BaseModel):
+    email: str
+    password: str
+    otp_code: str
+    name: Optional[str] = None
+
 # API Endpoint routes
 
 @app.get("/api/auth/check-email", response_model=CheckEmailResponse)
@@ -209,6 +220,152 @@ def api_check_email(email: str):
     if row:
         return CheckEmailResponse(exists=True, name=row["name"])
     return CheckEmailResponse(exists=False, name=None)
+
+@app.post("/api/auth/request-otp")
+def api_request_otp(req: OTPRequest):
+    load_env()
+    email = req.email.strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required.")
+    
+    # Format check
+    email_regex = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+    if not re.match(email_regex, email):
+        raise HTTPException(status_code=400, detail="Invalid email address format.")
+    
+    # DNS lookup
+    if not verify_email_dns(email):
+        raise HTTPException(status_code=400, detail="The email domain is invalid or cannot be resolved.")
+        
+    # Check account existence
+    user = db.get_contributor_by_email(email)
+    
+    # Signup attempt (name is provided)
+    if req.name:
+        name_val = req.name.strip()
+        if not name_val:
+            raise HTTPException(status_code=400, detail="Name is required for signup.")
+        if user and user["password_hash"]:
+            raise HTTPException(status_code=400, detail="Account already exists. Please sign in instead.")
+    else:
+        # Login attempt
+        if not user or not user["password_hash"]:
+            raise HTTPException(status_code=400, detail="Account does not exist. Please sign up instead.")
+        # Verify password
+        if db.hash_password(req.password) != user["password_hash"]:
+            raise HTTPException(status_code=400, detail="Invalid password.")
+            
+    # Generate 6-digit OTP
+    otp = str(random.randint(100000, 999999))
+    
+    # Expiry 5 minutes from now
+    expires_at = (time.time() + 300)
+    expires_at_iso = datetime.fromtimestamp(expires_at).isoformat()
+    db.save_otp(email, otp, expires_at_iso)
+    
+    # Print OTP code inside a prominent console box
+    border = "*" * 50
+    print(f"\n{border}")
+    print(f"* LOGIN / SIGNUP OTP CODE FOR: {email}")
+    print(f"* CODE: {otp}")
+    print(f"{border}\n")
+    
+    # Send email (hybrid)
+    email_sent = False
+    
+    # 1. Resend API
+    resend_api_key = os.environ.get("RESEND_API_KEY")
+    email_from = os.environ.get("EMAIL_FROM", "Family Tree <noreply@yourdomain.com>")
+    if resend_api_key:
+        try:
+            import requests
+            res = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "from": email_from,
+                    "to": [email],
+                    "subject": "Your Family Tree Verification Code",
+                    "html": f"<h2>Your OTP is {otp}</h2><p>This code will expire in 5 minutes.</p>"
+                },
+                timeout=10
+            )
+            if res.status_code == 200 or res.status_code == 201:
+                email_sent = True
+            else:
+                print(f"Resend API returned non-success status code {res.status_code}: {res.text}")
+        except Exception as e:
+            print(f"Failed to send email via Resend API: {e}")
+            
+    # 2. Gmail SMTP / Generic SMTP
+    smtp_server = os.environ.get("SMTP_SERVER")
+    smtp_password = os.environ.get("SMTP_PASSWORD")
+    if not email_sent and smtp_server and smtp_password:
+        smtp_port = int(os.environ.get("SMTP_PORT", "465"))
+        smtp_user = os.environ.get("SMTP_USER", email_from)
+        try:
+            msg = MIMEText(f"Your OTP code is: {otp}\nThis code will expire in 5 minutes.")
+            msg["Subject"] = "Family Tree Verification Code"
+            msg["From"] = email_from
+            msg["To"] = email
+            
+            if smtp_port == 465:
+                server = smtplib.SMTP_SSL(smtp_server, smtp_port)
+            else:
+                server = smtplib.SMTP(smtp_server, smtp_port)
+                server.starttls()
+                
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+            server.quit()
+            email_sent = True
+        except Exception as e:
+            print(f"Failed to send email via SMTP: {e}")
+    return {
+        "message": "OTP verification code sent directly to your email." if email_sent else "OTP code printed to server logs.",
+        "dev_otp": None if email_sent else otp
+    }
+
+@app.post("/api/auth/verify-otp")
+def api_verify_otp(req: OTPVerifyRequest):
+    email = req.email.strip().lower()
+    otp_code = req.otp_code.strip()
+    
+    if not email or not otp_code:
+        raise HTTPException(status_code=400, detail="Email and OTP code are required.")
+        
+    # Verify OTP
+    if not db.verify_otp(email, otp_code):
+        raise HTTPException(status_code=400, detail="Invalid or expired verification code.")
+        
+    # Hash password
+    pw_hash = db.hash_password(req.password)
+    
+    # Determine signup vs login
+    # If name is provided, register/update contributor details
+    if req.name:
+        name_val = req.name.strip()
+        contributor_id = db.register_contributor_with_password(name_val, email, pw_hash)
+        contributor_name = name_val
+    else:
+        # Login
+        user = db.get_contributor_by_email(email)
+        if not user:
+            raise HTTPException(status_code=400, detail="Account does not exist.")
+        # Ensure password hash is set
+        if not user["password_hash"]:
+            db.register_contributor_with_password(user["name"], email, pw_hash)
+        contributor_id = user["id"]
+        contributor_name = user["name"]
+        
+    return {
+        "contributor_id": contributor_id,
+        "contributor_name": contributor_name,
+        "contributor_email": email
+    }
 
 @app.post("/api/trees/create")
 def api_create_tree(req: TreeCreateRequest):

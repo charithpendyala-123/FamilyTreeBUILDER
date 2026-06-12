@@ -42,74 +42,53 @@
 
         <!-- 1. LANDING PAGE VIEW -->
         <section id="page-landing" class="page-section">
-            <div id="landing-choice-view" class="landing-choice-view">
-                <h2>What do you want to do?</h2>
-                <div class="landing-buttons">
-                    <button class="landing-btn" id="btn-show-create">🌳 Create New Tree</button>
-                    <button class="landing-btn" id="btn-show-enter">✏️ Edit Existing Tree</button>
+            <div class="landing-card auth-card">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="tab-signin">Sign In</button>
+                    <button class="auth-tab" id="tab-signup">Sign Up</button>
                 </div>
-            </div>
+                
+                <!-- Sign In Form -->
+                <form id="signin-form" class="auth-form">
+                    <h3>Welcome Back</h3>
+                    <div class="form-group">
+                        <label for="signin-email">Email Address</label>
+                        <input type="email" id="signin-email" placeholder="e.g. john@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signin-password">Password</label>
+                        <input type="password" id="signin-password" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Send Verification OTP</button>
+                </form>
 
-            <!-- Create Tree Form View -->
-            <div id="landing-create-view" class="landing-form-view" style="display: none;">
-                <button class="back-btn" id="btn-back-create">← Back</button>
-                <div class="landing-card">
-                    <h3>Set up a collaborative Family Tree</h3>
-                    <form id="create-tree-form">
-                        <div class="form-group">
-                            <label>Family Tree Name</label>
-                            <input type="text" id="create-tree-name" placeholder="e.g. Smith Family" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Family Tree Password</label>
-                            <input type="password" id="create-tree-pw" placeholder="Enter secure password" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Your Name</label>
-                            <input type="text" id="create-creator-name" placeholder="e.g. John Smith" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Your Email</label>
-                            <input type="email" id="create-creator-email" placeholder="e.g. john@example.com" required>
-                            <span id="create-email-status" class="email-status-badge"></span>
-                        </div>
-                        <button type="submit" class="submit-btn">Create Tree</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Enter Tree Form View -->
-            <div id="landing-enter-view" class="landing-form-view" style="display: none;">
-                <button class="back-btn" id="btn-back-enter">← Back</button>
-                <div class="landing-card">
-                    <h3>Access an existing Family Tree</h3>
-                    <form id="enter-tree-form">
-                        <div class="form-group">
-                            <label>Family Tree Name</label>
-                            <input type="text" id="enter-tree-name" placeholder="Enter the exact tree name" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Family Tree Password</label>
-                            <input type="password" id="enter-tree-pw" placeholder="Enter tree password" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Your Name</label>
-                            <input type="text" id="enter-contributor-name" placeholder="e.g. Alice Smith" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Your Email</label>
-                            <input type="email" id="enter-contributor-email" placeholder="e.g. alice@example.com" required>
-                            <span id="enter-email-status" class="email-status-badge"></span>
-                        </div>
-                        <button type="submit" class="submit-btn">Enter Tree</button>
-                    </form>
-                </div>
+                <!-- Sign Up Form -->
+                <form id="signup-form" class="auth-form" style="display: none;">
+                    <h3>Create Contributor Account</h3>
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" placeholder="e.g. John Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email Address</label>
+                        <input type="email" id="signup-email" placeholder="e.g. john@example.com" required>
+                        <span id="signup-email-status" class="email-status-badge"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" placeholder="Create a secure password" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Register & Send OTP</button>
+                </form>
             </div>
         </section>
 
         <!-- 2. MY TREES PAGE VIEW -->
         <section id="page-my-trees" class="page-section" style="display: none;">
-            <h2>My Trees</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">My Trees</h2>
+                <button class="add-tree-btn" id="btn-open-add-tree" title="Add or Join a Family Tree">+</button>
+            </div>
             <p>Here are all the family trees you have participated in:</p>
             <div id="my-trees-list"></div>
             <button class="back-btn mt-20" id="btn-mytrees-back">Back to Dashboard</button>
@@ -693,6 +672,67 @@
             </div>
             <div class="modal-body" id="modal-history-content">
                 <!-- Dynamically populated list -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Contributor Login OTP Modal -->
+    <div id="modal-otp-login" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <h3>Enter Verification Code</h3>
+            <p>A One-Time Password (OTP) has been generated to verify your identity.</p>
+            <form id="otp-login-form">
+                <div class="form-group">
+                    <label for="otp-login-code">6-Digit Verification Code</label>
+                    <input type="text" id="otp-login-code" placeholder="123456" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 8px; font-weight: bold;" required>
+                </div>
+                <div id="otp-dev-helper" class="dev-banner" style="display: none; padding: 8px 12px; margin-bottom: 15px; border-radius: 4px; font-size: 13px; text-align: center; background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; font-weight: bold;"></div>
+                <div class="btn-row">
+                    <button type="submit" class="submit-btn flex-1">Verify & Proceed</button>
+                    <button type="button" class="cancel-btn flex-1" id="btn-cancel-otp-login">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Join / Create Tree Modal (triggered by '+' button) -->
+    <div id="modal-add-tree" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Add Family Tree</h3>
+                <button class="close-modal" id="btn-close-add-tree-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs" style="margin-bottom: 20px;">
+                    <button class="auth-tab active" id="tab-add-create">Create Tree</button>
+                    <button class="auth-tab" id="tab-add-join">Join Tree</button>
+                </div>
+                
+                <!-- Create Tree Form -->
+                <form id="add-tree-create-form" class="add-tree-form">
+                    <div class="form-group">
+                        <label for="add-create-name">Family Tree Name</label>
+                        <input type="text" id="add-create-name" placeholder="e.g. Smith Family" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="add-create-pw">Create Tree Password</label>
+                        <input type="password" id="add-create-pw" placeholder="Enter secure password" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Create & Open Tree</button>
+                </form>
+
+                <!-- Join Tree Form -->
+                <form id="add-tree-join-form" class="add-tree-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="add-join-name">Family Tree Name</label>
+                        <input type="text" id="add-join-name" placeholder="Enter the exact tree name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="add-join-pw">Family Tree Password</label>
+                        <input type="password" id="add-join-pw" placeholder="Enter tree password" required>
+                    </div>
+                    <button type="submit" class="submit-btn">Join & Open Tree</button>
+                </form>
             </div>
         </div>
     </div>

@@ -6,6 +6,7 @@ let activeAction = null; // Currently showing form action name
 let network = null; // Vis.js Network instance\
 let currentPersonUpdatedAt = null; // Concurrency checking timestamp
 let collapsedNodeIds = new Set();  // Collapsed branch trackers
+let pendingAuth = null; // Stores { name, email, password } during OTP verification
 
 
 // Photo cache & helper utilities for Canvas rendering
@@ -160,7 +161,11 @@ function init() {
     const savedAuth = localStorage.getItem("auth");
     if (savedAuth) {
         auth = JSON.parse(savedAuth);
-        showPage("dashboard");
+        if (auth.tree_id) {
+            showPage("dashboard");
+        } else {
+            showPage("my_trees");
+        }
     } else {
         showPage("landing");
     }
@@ -178,11 +183,16 @@ function showPage(pageId) {
     if (pageId !== "landing" && auth) {
         document.getElementById("nav-dropdown-container").style.display = "block";
         document.getElementById("user-email-display").textContent = auth.contributor_email;
-     }
+    }
  
-        // Update active navigation indicator in the header dropdown
+    // Update active navigation indicator and visibility in the header dropdown
+    const hasTree = (auth && auth.tree_id) ? true : false;
     document.querySelectorAll(".dropdown-item").forEach(item => {
         const val = item.getAttribute("data-value");
+        if (val === "dashboard" || val === "settings") {
+            item.style.display = hasTree ? "block" : "none";
+        }
+        
         const indicator = item.querySelector(".current-indicator");
         if (indicator) {
             indicator.style.display = (val === pageId) ? "inline-block" : "none";
@@ -191,7 +201,10 @@ function showPage(pageId) {
 
     if (pageId === "landing") {
         document.getElementById("page-landing").style.display = "block";
-        showLandingChoice();
+        // Reset forms and default to signin tab
+        document.getElementById("signin-form").reset();
+        document.getElementById("signup-form").reset();
+        switchAuthTab("signin");
     } else if (pageId === "dashboard") {
         document.getElementById("page-dashboard").style.display = "block";
         loadDashboard();
@@ -204,13 +217,6 @@ function showPage(pageId) {
     }
 }
 
-// Landing View Toggle
-function showLandingChoice() {
-    document.getElementById("landing-choice-view").style.display = "block";
-    document.getElementById("landing-create-view").style.display = "none";
-    document.getElementById("landing-enter-view").style.display = "none";
-}
-
 // Notifications helper
 function showFeedback(message, type = "success") {
     const container = document.getElementById("feedback-container");
@@ -220,21 +226,32 @@ function showFeedback(message, type = "success") {
 
 // Setup Event Listeners
 function setupEventListeners() {
-    // Landing navigation choice
-    document.getElementById("btn-show-create").addEventListener("click", () => {
-        document.getElementById("landing-choice-view").style.display = "none";
-        document.getElementById("landing-create-view").style.display = "block";
-    });
-    document.getElementById("btn-show-enter").addEventListener("click", () => {
-        document.getElementById("landing-choice-view").style.display = "none";
-        document.getElementById("landing-enter-view").style.display = "block";
-    });
-    document.getElementById("btn-back-create").addEventListener("click", showLandingChoice);
-    document.getElementById("btn-back-enter").addEventListener("click", showLandingChoice);
+    // Auth Tab Switchers
+    document.getElementById("tab-signin").addEventListener("click", () => switchAuthTab("signin"));
+    document.getElementById("tab-signup").addEventListener("click", () => switchAuthTab("signup"));
 
-    // Form Submissions
-    document.getElementById("create-tree-form").addEventListener("submit", handleCreateTree);
-    document.getElementById("enter-tree-form").addEventListener("submit", handleEnterTree);
+    // Form Submissions for Auth
+    document.getElementById("signin-form").addEventListener("submit", handleSignInSubmit);
+    document.getElementById("signup-form").addEventListener("submit", handleSignUpSubmit);
+    document.getElementById("otp-login-form").addEventListener("submit", handleOtpLoginSubmit);
+    document.getElementById("btn-cancel-otp-login").addEventListener("click", () => {
+        document.getElementById("modal-otp-login").style.display = "none";
+    });
+
+    // Add Tree Modal listeners
+    document.getElementById("btn-open-add-tree").addEventListener("click", () => {
+        document.getElementById("modal-add-tree").style.display = "block";
+        document.getElementById("add-tree-create-form").reset();
+        document.getElementById("add-tree-join-form").reset();
+        switchAddTreeTab("create");
+    });
+    document.getElementById("btn-close-add-tree-modal").addEventListener("click", () => {
+        document.getElementById("modal-add-tree").style.display = "none";
+    });
+    document.getElementById("tab-add-create").addEventListener("click", () => switchAddTreeTab("create"));
+    document.getElementById("tab-add-join").addEventListener("click", () => switchAddTreeTab("join"));
+    document.getElementById("add-tree-create-form").addEventListener("submit", handleAddTreeCreateSubmit);
+    document.getElementById("add-tree-join-form").addEventListener("submit", handleAddTreeJoinSubmit);
     document.getElementById("first-member-form").addEventListener("submit", handleAddFirstMember);
     document.getElementById("edit-personal-form").addEventListener("submit", handleSavePersonal);
     document.getElementById("edit-bio-form").addEventListener("submit", handleSaveBio);
@@ -359,18 +376,11 @@ function setupEventListeners() {
     });
 
     // Email status check listeners
-    let createEmailTimer;
-    document.getElementById("create-creator-email").addEventListener("input", (e) => {
-        clearTimeout(createEmailTimer);
+    let signupEmailTimer;
+    document.getElementById("signup-email").addEventListener("input", (e) => {
+        clearTimeout(signupEmailTimer);
         const email = e.target.value.trim();
-        createEmailTimer = setTimeout(() => checkEmailAvailability(email, "create-email-status"), 500);
-    });
-
-    let enterEmailTimer;
-    document.getElementById("enter-contributor-email").addEventListener("input", (e) => {
-        clearTimeout(enterEmailTimer);
-        const email = e.target.value.trim();
-        enterEmailTimer = setTimeout(() => checkEmailAvailability(email, "enter-email-status"), 500);
+        signupEmailTimer = setTimeout(() => checkEmailAvailability(email, "signup-email-status"), 500);
     });
 }
 
@@ -441,80 +451,271 @@ async function checkEmailAvailability(email, statusId) {
 
 // ----------------- API OPERATIONS -----------------
 
-async function handleCreateTree(e) {
+// Auth helper actions
+function switchAuthTab(mode) {
+    const tabSignIn = document.getElementById("tab-signin");
+    const tabSignUp = document.getElementById("tab-signup");
+    const formSignIn = document.getElementById("signin-form");
+    const formSignUp = document.getElementById("signup-form");
+    
+    if (mode === "signin") {
+        tabSignIn.classList.add("active");
+        tabSignUp.classList.remove("active");
+        formSignIn.style.display = "block";
+        formSignUp.style.display = "none";
+    } else {
+        tabSignIn.classList.remove("active");
+        tabSignUp.classList.add("active");
+        formSignIn.style.display = "none";
+        formSignUp.style.display = "block";
+    }
+}
+
+function switchAddTreeTab(mode) {
+    const tabCreate = document.getElementById("tab-add-create");
+    const tabJoin = document.getElementById("tab-add-join");
+    const formCreate = document.getElementById("add-tree-create-form");
+    const formJoin = document.getElementById("add-tree-join-form");
+    
+    if (mode === "create") {
+        tabCreate.classList.add("active");
+        tabJoin.classList.remove("active");
+        formCreate.style.display = "block";
+        formJoin.style.display = "none";
+    } else {
+        tabCreate.classList.remove("active");
+        tabJoin.classList.add("active");
+        formCreate.style.display = "none";
+        formJoin.style.display = "block";
+    }
+}
+
+async function handleSignInSubmit(e) {
     e.preventDefault();
-    const tree_name = document.getElementById("create-tree-name").value.trim();
-    const password = document.getElementById("create-tree-pw").value;
-    const creator_name = document.getElementById("create-creator-name").value.trim();
-    const creator_email = document.getElementById("create-creator-email").value.trim();
-
+    const email = document.getElementById("signin-email").value.trim();
+    const password = document.getElementById("signin-password").value;
+    
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalBtnText = submitBtn.textContent;
+    const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = "Creating Tree...";
+    submitBtn.textContent = "Verifying...";
+    
+    try {
+        const res = await fetch("/api/auth/request-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            let detail = "Sign in failed.";
+            try { detail = JSON.parse(errText).detail || detail; } catch(ex) {}
+            throw new Error(detail);
+        }
+        const data = await res.json();
+        
+        pendingAuth = { email, password, name: null };
+        
+        // Show OTP modal
+        const devHelper = document.getElementById("otp-dev-helper");
+        if (data.dev_otp) {
+            devHelper.style.display = "block";
+            devHelper.textContent = `⚠️ Local Dev Mode OTP: ${data.dev_otp}`;
+        } else {
+            devHelper.style.display = "none";
+        }
+        
+        document.getElementById("otp-login-code").value = "";
+        document.getElementById("modal-otp-login").style.display = "block";
+        showFeedback("OTP code has been generated.", "success");
+    } catch (err) {
+        showFeedback(err.message || "Failed to sign in.", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
 
+async function handleSignUpSubmit(e) {
+    e.preventDefault();
+    const name = document.getElementById("signup-name").value.trim();
+    const email = document.getElementById("signup-email").value.trim();
+    const password = document.getElementById("signup-password").value;
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Registering...";
+    
+    try {
+        const res = await fetch("/api/auth/request-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password })
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            let detail = "Registration failed.";
+            try { detail = JSON.parse(errText).detail || detail; } catch(ex) {}
+            throw new Error(detail);
+        }
+        const data = await res.json();
+        
+        pendingAuth = { name, email, password };
+        
+        // Show OTP modal
+        const devHelper = document.getElementById("otp-dev-helper");
+        if (data.dev_otp) {
+            devHelper.style.display = "block";
+            devHelper.textContent = `⚠️ Local Dev Mode OTP: ${data.dev_otp}`;
+        } else {
+            devHelper.style.display = "none";
+        }
+        
+        document.getElementById("otp-login-code").value = "";
+        document.getElementById("modal-otp-login").style.display = "block";
+        showFeedback("Registration OTP sent.", "success");
+    } catch (err) {
+        showFeedback(err.message || "Failed to register.", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
+
+async function handleOtpLoginSubmit(e) {
+    e.preventDefault();
+    const otp_code = document.getElementById("otp-login-code").value.trim();
+    if (!pendingAuth) return;
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Verifying...";
+    
+    try {
+        const res = await fetch("/api/auth/verify-otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: pendingAuth.email,
+                password: pendingAuth.password,
+                name: pendingAuth.name,
+                otp_code
+            })
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            let detail = "Verification failed.";
+            try { detail = JSON.parse(errText).detail || detail; } catch(ex) {}
+            throw new Error(detail);
+        }
+        
+        auth = await res.json(); // { contributor_id, contributor_name, contributor_email }
+        localStorage.setItem("auth", JSON.stringify(auth));
+        
+        document.getElementById("modal-otp-login").style.display = "none";
+        showFeedback("Identity verified successfully!");
+        
+        // Redirect to my trees
+        showPage("my_trees");
+    } catch (err) {
+        showFeedback(err.message || "Failed to verify OTP.", "error");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
+
+async function handleAddTreeCreateSubmit(e) {
+    e.preventDefault();
+    const tree_name = document.getElementById("add-create-name").value.trim();
+    const password = document.getElementById("add-create-pw").value;
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Creating...";
+    
     try {
         const res = await fetch("/api/trees/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tree_name, password, creator_name, creator_email })
+            body: JSON.stringify({
+                tree_name,
+                password,
+                creator_name: auth.contributor_name,
+                creator_email: auth.contributor_email
+            })
         });
         if (!res.ok) {
             const errText = await res.text();
             let detail = "Failed to create tree.";
-            try {
-                detail = JSON.parse(errText).detail || detail;
-            } catch(ex) {}
+            try { detail = JSON.parse(errText).detail || detail; } catch(ex) {}
             throw new Error(detail);
         }
-        auth = await res.json();
+        
+        const treeAuth = await res.json();
+        // Merge the returned tree_id and tree_name into auth session
+        auth.tree_id = treeAuth.tree_id;
+        auth.tree_name = treeAuth.tree_name;
         localStorage.setItem("auth", JSON.stringify(auth));
-        selectedPersonId = auth.selected_person_id;
-        showFeedback("Family Tree created successfully!");
+        
+        document.getElementById("modal-add-tree").style.display = "none";
+        showFeedback("Tree created successfully!");
+        selectedPersonId = treeAuth.selected_person_id || null;
         showPage("dashboard");
     } catch (err) {
         showFeedback(err.message || "Failed to create tree.", "error");
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = originalBtnText;
+        submitBtn.textContent = originalText;
     }
 }
 
-async function handleEnterTree(e) {
+async function handleAddTreeJoinSubmit(e) {
     e.preventDefault();
-    const tree_name = document.getElementById("enter-tree-name").value.trim();
-    const password = document.getElementById("enter-tree-pw").value;
-    const contributor_name = document.getElementById("enter-contributor-name").value.trim();
-    const contributor_email = document.getElementById("enter-contributor-email").value.trim();
-
+    const tree_name = document.getElementById("add-join-name").value.trim();
+    const password = document.getElementById("add-join-pw").value;
+    
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalBtnText = submitBtn.textContent;
+    const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
-    submitBtn.textContent = "Entering Tree...";
-
+    submitBtn.textContent = "Joining...";
+    
     try {
         const res = await fetch("/api/trees/enter", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tree_name, password, contributor_name, contributor_email })
+            body: JSON.stringify({
+                tree_name,
+                password,
+                contributor_name: auth.contributor_name,
+                contributor_email: auth.contributor_email
+            })
         });
         if (!res.ok) {
             const errText = await res.text();
-            let detail = "Failed to enter tree.";
-            try {
-                detail = JSON.parse(errText).detail || detail;
-            } catch(ex) {}
+            let detail = "Failed to join tree.";
+            try { detail = JSON.parse(errText).detail || detail; } catch(ex) {}
             throw new Error(detail);
         }
-        auth = await res.json();
+        
+        const treeAuth = await res.json();
+        // Merge tree_id and tree_name into auth session
+        auth.tree_id = treeAuth.tree_id;
+        auth.tree_name = treeAuth.tree_name;
         localStorage.setItem("auth", JSON.stringify(auth));
-        showFeedback(auth.message);
+        
+        document.getElementById("modal-add-tree").style.display = "none";
+        showFeedback("Successfully joined tree!");
+        selectedPersonId = null;
         showPage("dashboard");
     } catch (err) {
-        showFeedback(err.message || "Failed to enter tree.", "error");
+        showFeedback(err.message || "Failed to join tree.", "error");
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = originalBtnText;
+        submitBtn.textContent = originalText;
     }
 }
 
@@ -524,6 +725,11 @@ async function loadMyTrees() {
         const trees = await res.json();
         const container = document.getElementById("my-trees-list");
         container.innerHTML = "";
+        
+        const backBtn = document.getElementById("btn-mytrees-back");
+        if (backBtn) {
+            backBtn.style.display = (auth && auth.tree_id) ? "inline-block" : "none";
+        }
         
         trees.forEach(t => {
             const card = document.createElement("div");

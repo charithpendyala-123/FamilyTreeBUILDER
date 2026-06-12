@@ -35,6 +35,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
+        password_hash TEXT,
         created_at TEXT NOT NULL,
         last_active_at TEXT NOT NULL
     )
@@ -153,12 +154,120 @@ def init_db():
     except sqlite3.OperationalError:
         pass # Column already exists
 
+    # Ensure password_hash column exists on Contributors (migration)
+    try:
+        cursor.execute("ALTER TABLE Contributors ADD COLUMN password_hash TEXT")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass # Column already exists
+
+    # Ensure ContributorOTPs table exists
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ContributorOTPs (
+        email TEXT PRIMARY KEY,
+        otp_code TEXT NOT NULL,
+        expires_at TEXT NOT NULL
+    )
+    """)
+
     conn.close()
 
 # Password Hashing
 def hash_password(password: str) -> str:
     """Hashes a password using SHA-256."""
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+# OTP operations
+def save_otp(email: str, otp_code: str, expires_at: str):
+    """Saves or updates the OTP code for an email."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO ContributorOTPs (email, otp_code, expires_at) VALUES (?, ?, ?) "
+            "ON CONFLICT(email) DO UPDATE SET otp_code=excluded.otp_code, expires_at=excluded.expires_at",
+            (email.strip().lower(), otp_code, expires_at)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+def verify_otp(email: str, otp_code: str) -> bool:
+    """Verifies the OTP code for an email and deletes it if valid."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT otp_code, expires_at FROM ContributorOTPs WHERE email = ?",
+            (email.strip().lower(),)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return False
+        
+        # Check if expired
+        try:
+            expires_at = datetime.fromisoformat(row["expires_at"])
+            if datetime.now() > expires_at:
+                return False
+        except ValueError:
+            return False
+            
+        if row["otp_code"] == otp_code:
+            # Delete after successful verification
+            cursor.execute("DELETE FROM ContributorOTPs WHERE email = ?", (email.strip().lower(),))
+            conn.commit()
+            return True
+        return False
+    finally:
+        conn.close()
+
+# Contributor General Accounts
+def register_contributor_with_password(name: str, email: str, password_hash: str):
+    """Registers a contributor with a password, or updates their details if they exist."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    now_str = datetime.now().isoformat()
+    try:
+        cursor.execute("SELECT id FROM Contributors WHERE email = ?", (email.strip().lower(),))
+        row = cursor.fetchone()
+        if row:
+            contributor_id = row["id"]
+            cursor.execute(
+                "UPDATE Contributors SET name = ?, password_hash = ?, last_active_at = ? WHERE id = ?",
+                (name.strip(), password_hash, now_str, contributor_id)
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO Contributors (name, email, password_hash, created_at, last_active_at) VALUES (?, ?, ?, ?, ?)",
+                (name.strip(), email.strip().lower(), password_hash, now_str, now_str)
+            )
+            contributor_id = cursor.lastrowid
+        conn.commit()
+        return contributor_id
+    finally:
+        conn.close()
+
+def get_contributor_by_email(email: str):
+    """Retrieves a contributor by their email address."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT id, name, email, password_hash FROM Contributors WHERE email = ?",
+            (email.strip().lower(),)
+        )
+        row = cursor.fetchone()
+        if row:
+            return {
+                "id": row["id"],
+                "name": row["name"],
+                "email": row["email"],
+                "password_hash": row["password_hash"]
+            }
+        return None
+    finally:
+        conn.close()
 
 # Tree Operations
 def create_tree(tree_name: str, password: str, creator_name: str, creator_email: str):
