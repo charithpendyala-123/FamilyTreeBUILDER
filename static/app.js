@@ -51,9 +51,13 @@ function createSvgNodeCard(person, isSelected, isDimmed = false) {
     // Override isDimmed based on global selection for consistency across async updates
     isDimmed = selectedRelationIds.size > 0 ? !selectedRelationIds.has(person.id) : false;
 
+    const isDark = document.documentElement.classList.contains("dark-mode");
+    const bgCol = isSelected ? (isDark ? "#1e293b" : "#fffbeb") : (isDark ? "#111827" : "#ffffff");
     const borderCol = isSelected ? "#ffaa00" : (person.gender === "Male" ? "#1b6dc1" : (person.gender === "Female" ? "#c05c6e" : "#5f6368"));
-    const bgCol = isSelected ? "#fffbeb" : "#ffffff";
     const headerBgCol = person.gender === "Male" ? "#1b6dc1" : (person.gender === "Female" ? "#c05c6e" : "#5f6368");
+    const textCol = isDark ? "#f8fafc" : "#2c3e50";
+    const subtextCol = isDark ? "#94a3b8" : "#7f8c8d";
+    const lineCol = isDark ? "#1e293b" : "#eee";
     
     // Check if the base64 data URI is preloaded in cache, otherwise fallback to silhouette
     let imgUri = "";
@@ -110,13 +114,13 @@ function createSvgNodeCard(person, isSelected, isDimmed = false) {
         <rect x="2" y="2" width="196" height="10" rx="4" ry="4" fill="${headerBgCol}"/>
         <circle cx="35" cy="55" r="27" fill="none" stroke="${borderCol}" stroke-width="2"/>
         <image x="10" y="30" width="50" height="50" href="${imgUri}" clip-path="url(#circleClip_${person.id})"/>
-        <text x="70" y="45" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="#2c3e50">${escName}</text>
-        <text x="70" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">${escDates}</text>
-        <line x1="10" y1="90" x2="190" y2="90" stroke="#eee" stroke-width="1"/>
-        <text x="15" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">✉ ${escEmail}</text>
-        <text x="15" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">📞 ${escPhone}</text>
-        <line x1="10" y1="142" x2="190" y2="142" stroke="#eee" stroke-width="1"/>
-        <text x="15" y="156" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="#7f8c8d">📝 ${escNotes}</text>
+        <text x="70" y="45" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="bold" fill="${textCol}">${escName}</text>
+        <text x="70" y="60" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="${subtextCol}">${escDates}</text>
+        <line x1="10" y1="90" x2="190" y2="90" stroke="${lineCol}" stroke-width="1"/>
+        <text x="15" y="110" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="${subtextCol}">✉ ${escEmail}</text>
+        <text x="15" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="${subtextCol}">📞 ${escPhone}</text>
+        <line x1="10" y1="142" x2="190" y2="142" stroke="${lineCol}" stroke-width="1"/>
+        <text x="15" y="156" font-family="system-ui, -apple-system, sans-serif" font-size="9" fill="${subtextCol}">📝 ${escNotes}</text>
       </g>
     </svg>
     `;

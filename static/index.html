@@ -4,12 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Family Tree Builder</title>
+    <!-- Early theme loader to prevent flashing -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem("theme");
+            if (savedTheme === "dark") {
+                document.documentElement.classList.add("dark-mode");
+            }
+        })();
+    </script>
     <!-- Modern font from Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Standalone Vis.js Network Library for tree canvas -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <!-- Main Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=1.1">
+    <link rel="stylesheet" href="style.css?v=1.2">
 </head>
 <body>
 
@@ -19,17 +28,24 @@
             <span class="logo-icon">🌳</span>
             <h1>FAMILY TREE BUILDER</h1>
         </div>
-                <div class="header-nav-container" id="nav-dropdown-container" style="display: none;">
-            <div class="custom-dropdown" id="header-custom-dropdown">
-                <button class="dropdown-trigger" id="dropdown-email-trigger">
-                    <span id="user-email-display">user@example.com</span>
-                    <span class="dropdown-arrow">▼</span>
-                </button>
-                <div class="dropdown-menu">
-                    <button class="dropdown-item" data-value="dashboard"><span class="current-indicator" style="display: none;">currently at:- </span>Dashboard</button>
-                    <button class="dropdown-item" data-value="my_trees"><span class="current-indicator" style="display: none;">currently at:- </span>My Trees</button>
-                    <button class="dropdown-item" data-value="settings"><span class="current-indicator" style="display: none;">currently at:- </span>Tree Settings</button>
-                    <button class="dropdown-item" data-value="logout">Logout</button>
+        <div class="header-actions">
+            <!-- Theme Toggle Button -->
+            <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Light/Dark Mode">
+                <span class="theme-icon-light">☀️</span>
+                <span class="theme-icon-dark" style="display: none;">🌙</span>
+            </button>
+            <div class="header-nav-container" id="nav-dropdown-container" style="display: none;">
+                <div class="custom-dropdown" id="header-custom-dropdown">
+                    <button class="dropdown-trigger" id="dropdown-email-trigger">
+                        <span id="user-email-display">user@example.com</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <button class="dropdown-item" data-value="dashboard"><span class="current-indicator" style="display: none;">currently at:- </span>Dashboard</button>
+                        <button class="dropdown-item" data-value="my_trees"><span class="current-indicator" style="display: none;">currently at:- </span>My Trees</button>
+                        <button class="dropdown-item" data-value="settings"><span class="current-indicator" style="display: none;">currently at:- </span>Tree Settings</button>
+                        <button class="dropdown-item" data-value="logout">Logout</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -743,6 +759,39 @@
     </footer>
 
     <!-- Main JS Application Logic -->
-    <script src="app.js?v=1.1"></script>
+    <script src="app.js?v=1.2"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggleBtn = document.getElementById("theme-toggle");
+            const lightIcon = document.querySelector(".theme-icon-light");
+            const darkIcon = document.querySelector(".theme-icon-dark");
+            
+            function updateThemeIcon(isDark) {
+                if (lightIcon && darkIcon) {
+                    if (isDark) {
+                        lightIcon.style.display = "none";
+                        darkIcon.style.display = "inline";
+                    } else {
+                        lightIcon.style.display = "inline";
+                        darkIcon.style.display = "none";
+                    }
+                }
+            }
+            
+            const isDark = document.documentElement.classList.contains("dark-mode");
+            updateThemeIcon(isDark);
+            
+            if (toggleBtn) {
+                toggleBtn.addEventListener("click", () => {
+                    const currentlyDark = document.documentElement.classList.toggle("dark-mode");
+                    localStorage.setItem("theme", currentlyDark ? "dark" : "light");
+                    updateThemeIcon(currentlyDark);
+                    if (typeof loadDashboard === "function" && auth && auth.tree_id) {
+                        loadDashboard();
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
