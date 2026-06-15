@@ -180,6 +180,14 @@ class TreeSettingsRequest(BaseModel):
     new_password: Optional[str] = None
     contributor_id: int
     tree_type: str = 'family'
+    description: Optional[str] = None
+
+class DangerZoneRequest(BaseModel):
+    contributor_id: int
+
+class TransferOwnershipRequest(BaseModel):
+    contributor_id: int
+    new_owner_email: str
 
 class ImportTreeRequest(BaseModel):
     tree_name: str
@@ -450,10 +458,67 @@ def api_get_tree_stats(tree_id: int):
 @app.put("/api/trees/{tree_id}/settings")
 def api_update_settings(tree_id: int, req: TreeSettingsRequest):
     try:
-        db.update_tree_settings(tree_id, req.new_name, req.new_password, req.tree_type)
+        db.update_tree_settings(tree_id, req.new_name, req.new_password, req.tree_type, req.description)
         db.log_change(tree_id, req.contributor_id, None, "Settings Change", f"Modified tree details. Name: {req.new_name}, Type: {req.tree_type}")
         db.save_snapshot(tree_id, req.contributor_id, "Update Settings")
         return {"message": "Settings updated"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/trees/{tree_id}")
+def api_delete_tree(tree_id: int, contributor_id: int):
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT created_by, tree_name FROM FamilyTrees WHERE id = ?", (tree_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Family tree not found.")
+    if row["created_by"] != contributor_id:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Only the owner of the tree can delete it.")
+    conn.close()
+    
+    db.delete_family_tree(tree_id)
+    return {"message": f"Family tree '{row['tree_name']}' has been deleted successfully."}
+
+@app.post("/api/trees/{tree_id}/clear-data")
+def api_clear_tree_data(tree_id: int, req: DangerZoneRequest):
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT created_by FROM FamilyTrees WHERE id = ?", (tree_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Family tree not found.")
+    if row["created_by"] != req.contributor_id:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Only the owner of the tree can clear all data.")
+    conn.close()
+    
+    db.clear_family_tree_data(tree_id)
+    db.log_change(tree_id, req.contributor_id, None, "Clear Data", "Cleared all person and relationship records in the tree.")
+    db.save_snapshot(tree_id, req.contributor_id, "Clear Tree Data")
+    return {"message": "All family tree person and relationship records have been cleared successfully."}
+
+@app.post("/api/trees/{tree_id}/transfer-ownership")
+def api_transfer_ownership(tree_id: int, req: TransferOwnershipRequest):
+    conn = db.get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT created_by FROM FamilyTrees WHERE id = ?", (tree_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Family tree not found.")
+    if row["created_by"] != req.contributor_id:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Only the owner of the tree can transfer ownership.")
+    conn.close()
+    
+    try:
+        db.transfer_tree_ownership(tree_id, req.new_owner_email)
+        db.log_change(tree_id, req.contributor_id, None, "Transfer Ownership", f"Transferred tree ownership to {req.new_owner_email}")
+        return {"message": f"Tree ownership has been transferred to '{req.new_owner_email}' successfully."}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

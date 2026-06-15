@@ -2,15 +2,15 @@
 
 /* Base Reset & Variables */
 :root {
-    --primary-teal: #1b6dc1;       /* Royal Blue */
-    --secondary-teal: #2b7bc4;     /* Sky/Button Blue */
-    --dark-teal: #154278;          /* Dark Navy Blue */
+    --primary-teal: #23787C;       /* Heritage Deep Teal */
+    --secondary-teal: #2E8B90;     /* Muted Teal */
+    --dark-teal: #134e51;          /* Dark Forest Teal */
     --female-rose: #c05c6e;
     --female-light: #fdf2f4;
-    --male-light: #e6f0fa;         /* Very Light Blue */
-    --royal-blue: #1b6dc1;
-    --royal-blue-hover: #16569a;
-    --background-gray: #f8fafc;
+    --male-light: #e6f2f3;         /* Soft Teal-White */
+    --royal-blue: #23787C;
+    --royal-blue-hover: #1e6569;
+    --background-gray: #F8FAFB;
     --text-dark: #0f172a;
     --text-muted: #64748b;
     --border-light: #e2e8f0;
@@ -43,9 +43,29 @@ body {
     font-family: 'Inter', sans-serif;
     color: var(--text-dark);
     background-color: var(--background-gray);
-    background-image: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    background-image: 
+        radial-gradient(circle at 5% 10%, rgba(35, 120, 124, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 95% 90%, rgba(214, 178, 94, 0.06) 0%, transparent 45%),
+        linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    background-attachment: fixed, fixed, fixed;
     line-height: 1.6;
     min-height: 100vh;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('family_pattern.png');
+    background-repeat: repeat;
+    background-size: 180px;
+    opacity: 0.035; /* Faint genealogy pattern in the margins */
+    pointer-events: none;
+    z-index: -10;
 }
 
 /* Scrollbars */
@@ -838,6 +858,30 @@ body {
     background-color: #f8fafc;
     background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
     background-size: 20px 20px;
+    position: relative;
+}
+
+.canvas-container::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    background-image: url('tree_watermark.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.06; /* Faint tree silhouette */
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Ensure Vis.js network canvas container renders on top of pseudo-element */
+.canvas-container > div {
+    position: relative;
+    z-index: 1;
 }
 
 .canvas-footer {
@@ -920,6 +964,30 @@ body {
     padding: 24px;
     box-shadow: var(--shadow-md);
     align-self: flex-start;
+    position: relative;
+    overflow: hidden;
+}
+
+.workspace-right::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('family_pattern.png');
+    background-repeat: repeat;
+    background-size: 180px;
+    opacity: 0.07; /* Faint genealogy pattern */
+    pointer-events: none;
+    z-index: 0;
+    border-radius: var(--radius-lg);
+}
+
+/* Ensure interactive sidebar content sits on top of background pattern */
+.workspace-right > * {
+    position: relative;
+    z-index: 1;
 }
 
 .workspace-right h2 {
@@ -1372,7 +1440,15 @@ html.dark-mode {
 /* Dark Mode Component Overrides */
 html.dark-mode body {
     background-color: var(--background-gray);
-    background-image: linear-gradient(135deg, #0b0f19 0%, #0f172a 100%);
+    background-image: 
+        radial-gradient(circle at 5% 10%, rgba(46, 139, 144, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 95% 90%, rgba(214, 178, 94, 0.05) 0%, transparent 45%),
+        linear-gradient(135deg, #0b0f19 0%, #0f172a 100%);
+}
+
+html.dark-mode body::before {
+    opacity: 0.022;
+    filter: invert(1) brightness(0.7); /* Inverts the white background pattern to black/dark gray lines */
 }
 
 html.dark-mode .custom-header {
@@ -1458,6 +1534,16 @@ html.dark-mode .canvas-toolbar button:hover:not(:disabled) {
 html.dark-mode .canvas-container {
     background-color: #0b0f19;
     background-image: radial-gradient(#1e293b 1px, transparent 1px);
+}
+
+html.dark-mode .canvas-container::before {
+    opacity: 0.035; /* Faint silhouette in dark mode */
+    filter: invert(1); /* Invert black watermark to white watermark on dark background */
+}
+
+html.dark-mode .workspace-right::before {
+    opacity: 0.045;
+    filter: invert(1) brightness(0.8); /* Inverts white background pattern for dark mode */
 }
 
 html.dark-mode .canvas-legend-row {
@@ -1628,4 +1714,1114 @@ html.dark-mode .feedback-banner.success {
 html.dark-mode .feedback-banner.error {
     background-color: #7f1d1d;
     color: #fecaca;
+}
+
+/* Landing Page Overhaul Styles */
+#page-landing {
+    position: relative;
+    padding: 60px 0;
+    min-height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+}
+
+/* Remove old gradients that conflict with layout */
+#page-landing {
+    background-image: none !important;
+}
+
+#page-landing .landing-split-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 60px;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* Watermark opacity adjustment in dark mode */
+html.dark-mode #page-landing::before {
+    opacity: 0.02; /* Subtle dark mode watermark */
+}
+
+/* Dark Mode heritage override */
+html.dark-mode {
+    --background-gray: #0d1516;       /* Dark teal theme */
+    --card-bg: #121e1f;
+    --border-light: #1b2e30;
+    --primary-teal: #2e8b90;
+    --secondary-teal: #3aa2a8;
+}
+
+/* Left Hero & Visual Panel */
+.landing-left-panel {
+    flex: 1.25;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+    animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-section h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--dark-teal) 0%, var(--primary-teal) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+html.dark-mode .hero-section h2 {
+    background: linear-gradient(135deg, #f8fafc 0%, #3aa2a8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    font-size: 16px;
+    color: var(--text-muted);
+    font-weight: 500;
+    line-height: 1.6;
+    max-width: 540px;
+}
+
+/* Premium styled card configuration */
+.auth-card {
+    width: 100% !important;
+    max-width: 440px !important;
+    margin: 0 !important;
+    border-radius: 24px !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.06) !important;
+    border: 1px solid rgba(226, 232, 240, 0.7) !important;
+}
+
+html.dark-mode .auth-card {
+    background: rgba(18, 30, 31, 0.8) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(27, 46, 48, 0.8) !important;
+}
+
+/* Right side panel containing login card & benefits */
+.landing-right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 440px;
+    width: 100%;
+}
+
+/* Premium family tree hero image container */
+.hero-image-container {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+    max-width: 500px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+html.dark-mode .hero-image-container {
+    background: rgba(18, 30, 31, 0.5);
+    border-color: #1b2e30;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.hero-image-container:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 25px 50px rgba(15, 23, 42, 0.1);
+}
+
+.hero-tree-image {
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    display: block;
+    object-fit: contain;
+}
+
+/* Statistics Strip styling */
+.stats-strip {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.stat-badge {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease;
+}
+
+html.dark-mode .stat-badge {
+    background: #121e1f;
+    border-color: #1b2e30;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.stat-badge:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 20px;
+}
+
+.stat-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-text strong {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.stat-text small {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Right side panel & benefits */
+.benefits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 16px;
+}
+
+.benefit-item {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+html.dark-mode .benefit-item {
+    color: #94a3b8;
+}
+
+/* Watermark image container helper for rendering tree */
+#page-landing::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 600px;
+    height: 100%;
+    background-image: url('tree_watermark.png');
+    background-repeat: no-repeat;
+    background-position: right center;
+    background-size: contain;
+    opacity: 0.035; /* Faded heritage watermark */
+    pointer-events: none;
+    z-index: 0;
+}
+
+html.dark-mode #page-landing::after {
+    opacity: 0.035;
+    filter: invert(1); /* Invert black watermark to white watermark in dark mode */
+}
+
+@media (max-width: 1024px) {
+    #page-landing {
+        padding: 40px 0;
+        background-image: none !important;
+    }
+    #page-landing::after {
+        display: none;
+    }
+    #page-landing .landing-split-container {
+        flex-direction: column;
+        gap: 48px;
+        text-align: center;
+        padding: 0 32px;
+    }
+    .landing-left-panel {
+        align-items: center;
+        width: 100%;
+        max-width: 600px;
+    }
+    .hero-subtitle {
+        margin: 0 auto;
+    }
+    .landing-right-panel {
+        margin: 0 auto;
+        align-items: center;
+    }
+    .benefits-list {
+        align-items: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-strip {
+        gap: 12px;
+    }
+    .stat-badge {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    .stat-icon {
+        font-size: 16px;
+    }
+    .stat-text strong {
+        font-size: 13px;
+    }
+    .stat-text small {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 600px) {
+    .stats-strip {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        max-width: 320px;
+    }
+    .stat-badge {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    #page-landing {
+        padding: 24px 0;
+    }
+    #page-landing .landing-split-container {
+        gap: 32px;
+        padding: 0 16px;
+    }
+    .hero-section h2 {
+        font-size: 32px;
+    }
+    .hero-subtitle {
+        font-size: 14px;
+    }
+    .hero-image-container {
+        padding: 12px;
+        border-radius: 16px;
+    }
+    .auth-card {
+        padding: 24px !important;
+        border-radius: 16px !important;
+    }
+}
+
+/* My Trees Revamp Styles */
+.my-trees-hero {
+    background: linear-gradient(135deg, rgba(35, 120, 124, 0.05) 0%, rgba(214, 178, 94, 0.03) 100%);
+    border: 1px solid rgba(35, 120, 124, 0.15);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 24px;
+}
+
+html.dark-mode .my-trees-hero {
+    background: linear-gradient(135deg, rgba(46, 139, 144, 0.08) 0%, rgba(18, 30, 31, 0.6) 100%);
+    border-color: rgba(46, 139, 144, 0.2);
+}
+
+.hero-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.hero-header-row h2 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text-dark);
+}
+
+.hero-desc {
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 760px;
+    margin: 0;
+}
+
+/* Memories Banner styling */
+.memories-banner {
+    background: var(--card-bg);
+    border-left: 4px solid var(--primary-teal);
+    border-radius: 4px 12px 12px 4px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+html.dark-mode .memories-banner {
+    border-left-color: var(--primary-teal);
+    border-right: 1px solid var(--border-light);
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.memories-quote {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 16px;
+    font-style: italic;
+    font-weight: 500;
+    margin: 0;
+    color: var(--text-dark);
+}
+
+.memories-author {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--primary-teal);
+}
+
+/* Statistics Cards Grid */
+.mytrees-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 30px;
+}
+
+.mytrees-stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mytrees-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.mytrees-stat-card .stat-icon {
+    font-size: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: var(--male-light);
+    border-radius: 12px;
+}
+
+.mytrees-stat-card .stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.mytrees-stat-card .stat-val {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.2;
+}
+
+.mytrees-stat-card .stat-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+/* Toolbar search & filters */
+.mytrees-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.mytrees-toolbar .search-box {
+    position: relative;
+    max-width: 380px;
+    width: 100%;
+}
+
+.mytrees-toolbar .search-box input {
+    width: 100%;
+    padding: 10px 16px 10px 42px;
+    border: 1px solid var(--border-light);
+    border-radius: 30px;
+    background: var(--card-bg);
+    color: var(--text-dark);
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.mytrees-toolbar .search-box input:focus {
+    border-color: var(--primary-teal);
+    box-shadow: 0 0 0 3px rgba(35, 120, 124, 0.15);
+}
+
+.mytrees-toolbar .search-box .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.filter-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-pill {
+    padding: 8px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 30px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-pill:hover {
+    border-color: var(--primary-teal);
+    color: var(--primary-teal);
+    background: var(--male-light);
+}
+
+.filter-pill.active {
+    background: var(--primary-teal);
+    border-color: var(--primary-teal);
+    color: white;
+}
+
+/* Trees Grid & Redesigned Tree Cards */
+.my-trees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.tree-rich-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.tree-rich-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.tree-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.tree-card-header .tree-icon-wrapper {
+    font-size: 24px;
+    width: 44px;
+    height: 44px;
+    background: var(--male-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tree-card-header h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text-dark);
+}
+
+.tree-card-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+    padding: 12px 0;
+}
+
+.tree-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tree-stat-item .stat-num {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.tree-stat-item .stat-name {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.tree-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tree-card-footer .update-time {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.tree-enter-btn {
+    padding: 8px 16px;
+    background-color: var(--primary-teal);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tree-enter-btn:hover {
+    background-color: var(--royal-blue-hover);
+    transform: translateY(-1px);
+}
+
+/* Empty State */
+.mytrees-empty-state {
+    text-align: center;
+    padding: 40px;
+    background: var(--card-bg);
+    border: 1px dashed var(--border-light);
+    border-radius: 20px;
+    color: var(--text-muted);
+}
+
+.mytrees-empty-state .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+}
+
+/* Tree Settings Dashboard Styles */
+.settings-dashboard-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 24px;
+}
+
+@media (max-width: 1024px) {
+    .settings-dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.settings-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.settings-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('family_pattern.png');
+    background-repeat: repeat;
+    background-size: 150px;
+    opacity: 0.02;
+    pointer-events: none;
+}
+
+.settings-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.settings-card h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.card-subtitle-help {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: -6px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.import-section-card {
+    background: rgba(35, 120, 124, 0.03);
+    border: 1px dashed rgba(35, 120, 124, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 20px;
+}
+
+.import-section-card h4 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--primary-teal);
+}
+
+.theme-highlight-card {
+    background: linear-gradient(135deg, rgba(35, 120, 124, 0.06) 0%, rgba(214, 178, 94, 0.04) 100%);
+    border: 1.5px solid rgba(35, 120, 124, 0.2);
+}
+
+html.dark-mode .theme-highlight-card {
+    background: linear-gradient(135deg, rgba(46, 139, 144, 0.1) 0%, rgba(18, 30, 31, 0.6) 100%);
+    border-color: rgba(46, 139, 144, 0.3);
+}
+
+.overview-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.overview-avatar {
+    font-size: 36px;
+    width: 60px;
+    height: 60px;
+    background: var(--male-light);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-light);
+}
+
+.overview-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.overview-meta-info p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 6px 0;
+}
+
+.overview-meta-info p strong {
+    color: var(--text-dark);
+}
+
+.stats-pills-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.stats-pill-item {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+html.dark-mode .stats-pill-item {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.pill-icon {
+    font-size: 20px;
+    background: var(--male-light);
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pill-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    flex: 1;
+}
+
+.pill-value {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+/* Family Health / Completeness Widget */
+.completeness-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.progress-bar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.progress-track {
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+html.dark-mode .progress-track {
+    background: #334155;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-teal) 0%, #319795 100%);
+    border-radius: 4px;
+    transition: width 0.5s ease-out;
+}
+
+/* Contributors list */
+.contributors-list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.contributor-item-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.015);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+}
+
+html.dark-mode .contributor-item-row {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.contrib-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.contrib-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-teal);
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contrib-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.contrib-role {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+.contrib-role.owner {
+    background: rgba(214, 178, 94, 0.15);
+    color: #b7791f;
+}
+
+.contrib-role.editor {
+    background: rgba(35, 120, 124, 0.15);
+    color: var(--primary-teal);
+}
+
+/* Recent activity timeline */
+.activity-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+.activity-timeline::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 5px;
+    bottom: 5px;
+    width: 2px;
+    background: var(--border-light);
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -20px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary-teal);
+    border: 2px solid var(--card-bg);
+    box-shadow: 0 0 0 2px rgba(35, 120, 124, 0.2);
+}
+
+.timeline-content {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--text-dark);
+}
+
+.timeline-meta {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* Danger Zone styling */
+.danger-zone-card {
+    border: 1.5px solid rgba(220, 38, 38, 0.2);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.02) 0%, rgba(220, 38, 38, 0.005) 100%);
+}
+
+html.dark-mode .danger-zone-card {
+    border-color: rgba(220, 38, 38, 0.3);
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.05) 0%, rgba(18, 18, 18, 0.4) 100%);
+}
+
+.danger-actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 16px;
+}
+
+.danger-action-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(220, 38, 38, 0.1);
+}
+
+.danger-action-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.danger-action-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.danger-action-text strong {
+    font-size: 14px;
+    color: #dc2626;
+    font-weight: 700;
+}
+
+.danger-action-text span {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.danger-input {
+    margin-top: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    max-width: 280px;
+}
+
+.danger-input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.danger-btn {
+    background: white;
+    color: #dc2626;
+    border: 1.5px solid #dc2626;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.danger-btn:hover {
+    background: #dc2626;
+    color: white;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.delete-btn-large {
+    background: #dc2626;
+    color: white;
+}
+
+.delete-btn-large:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+    box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3);
+}
+
+.radio-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.radio-label-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.radio-label-item:hover {
+    border-color: var(--primary-teal);
+    background: rgba(35, 120, 124, 0.02);
+}
+
+.radio-label-item input[type="radio"] {
+    margin-top: 4px;
+}
+
+.radio-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.radio-text strong {
+    font-size: 13px;
+    color: var(--text-dark);
+}
+
+.radio-help {
+    font-size: 11px;
+    color: var(--text-muted);
 }

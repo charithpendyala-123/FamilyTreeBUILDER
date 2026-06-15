@@ -18,7 +18,7 @@
     <!-- Standalone Vis.js Network Library for tree canvas -->
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <!-- Main Stylesheet -->
-    <link rel="stylesheet" href="style.css?v=1.2">
+    <link rel="stylesheet" href="style.css?v=1.8">
 </head>
 <body>
 
@@ -58,121 +58,371 @@
 
         <!-- 1. LANDING PAGE VIEW -->
         <section id="page-landing" class="page-section">
-            <div class="landing-card auth-card">
-                <div class="auth-tabs">
-                    <button class="auth-tab active" id="tab-signin">Sign In</button>
-                    <button class="auth-tab" id="tab-signup">Sign Up</button>
+            <div class="landing-split-container">
+                <!-- Left Side: Product Intro, Mockup Tree, Stats -->
+                <div class="landing-left-panel">
+                    <div class="hero-section">
+                        <h2>Preserve Your Family Legacy</h2>
+                        <p class="hero-subtitle">Build family trees, upload memories, and collaborate with relatives across generations.</p>
+                    </div>
+                    
+                    <!-- Premium Family Tree Hero Image -->
+                    <div class="hero-image-container">
+                        <img src="family_tree_hero.png" alt="Premium Family Tree" class="hero-tree-image">
+                    </div>
+                    
+                    <!-- Stats Strip -->
+                    <div class="stats-strip">
+                        <div class="stat-badge">
+                            <span class="stat-icon">🌳</span>
+                            <div class="stat-text">
+                                <strong>25,000+</strong>
+                                <small>Family Members</small>
+                            </div>
+                        </div>
+                        <div class="stat-badge">
+                            <span class="stat-icon">📸</span>
+                            <div class="stat-text">
+                                <strong>100,000+</strong>
+                                <small>Photos Stored</small>
+                            </div>
+                        </div>
+                        <div class="stat-badge">
+                            <span class="stat-icon">👨‍👩‍👧‍👦</span>
+                            <div class="stat-text">
+                                <strong>4,500+</strong>
+                                <small>Trees Created</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
-                <!-- Sign In Form -->
-                <form id="signin-form" class="auth-form">
-                    <h3>Welcome Back</h3>
-                    <div class="form-group">
-                        <label for="signin-email">Email Address</label>
-                        <input type="email" id="signin-email" placeholder="e.g. john@example.com" required>
+                <!-- Right Side: Login Card and Benefits -->
+                <div class="landing-right-panel">
+                    <div class="landing-card auth-card">
+                        <div class="auth-tabs">
+                            <button class="auth-tab active" id="tab-signin">Sign In</button>
+                            <button class="auth-tab" id="tab-signup">Sign Up</button>
+                        </div>
+                        
+                        <!-- Sign In Form -->
+                        <form id="signin-form" class="auth-form">
+                            <h3>Welcome Back</h3>
+                            <div class="form-group">
+                                <label for="signin-email">Email Address</label>
+                                <input type="email" id="signin-email" placeholder="e.g. john@example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="signin-password">Password</label>
+                                <input type="password" id="signin-password" placeholder="Enter your password" required>
+                            </div>
+                            <button type="submit" class="submit-btn">Send Verification OTP</button>
+                        </form>
+        
+                        <!-- Sign Up Form -->
+                        <form id="signup-form" class="auth-form" style="display: none;">
+                            <h3>Create Contributor Account</h3>
+                            <div class="form-group">
+                                <label for="signup-name">Full Name</label>
+                                <input type="text" id="signup-name" placeholder="e.g. John Smith" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="signup-email">Email Address</label>
+                                <input type="email" id="signup-email" placeholder="e.g. john@example.com" required>
+                                <span id="signup-email-status" class="email-status-badge"></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="signup-password">Password</label>
+                                <input type="password" id="signup-password" placeholder="Create a secure password" required>
+                            </div>
+                            <button type="submit" class="submit-btn">Register & Send OTP</button>
+                        </form>
                     </div>
-                    <div class="form-group">
-                        <label for="signin-password">Password</label>
-                        <input type="password" id="signin-password" placeholder="Enter your password" required>
+                    
+                    <!-- Product Benefits Checklist -->
+                    <div class="benefits-list">
+                        <div class="benefit-item">✓ Collaborative Family Trees</div>
+                        <div class="benefit-item">✓ Photo & Biography Storage</div>
+                        <div class="benefit-item">✓ Complete Change History</div>
+                        <div class="benefit-item">✓ Secure OTP Verification</div>
+                        <div class="benefit-item">✓ Access From Anywhere</div>
                     </div>
-                    <button type="submit" class="submit-btn">Send Verification OTP</button>
-                </form>
-
-                <!-- Sign Up Form -->
-                <form id="signup-form" class="auth-form" style="display: none;">
-                    <h3>Create Contributor Account</h3>
-                    <div class="form-group">
-                        <label for="signup-name">Full Name</label>
-                        <input type="text" id="signup-name" placeholder="e.g. John Smith" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-email">Email Address</label>
-                        <input type="email" id="signup-email" placeholder="e.g. john@example.com" required>
-                        <span id="signup-email-status" class="email-status-badge"></span>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-password">Password</label>
-                        <input type="password" id="signup-password" placeholder="Create a secure password" required>
-                    </div>
-                    <button type="submit" class="submit-btn">Register & Send OTP</button>
-                </form>
+                </div>
             </div>
         </section>
 
         <!-- 2. MY TREES PAGE VIEW -->
         <section id="page-my-trees" class="page-section" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">My Trees</h2>
-                <button class="add-tree-btn" id="btn-open-add-tree" title="Add or Join a Family Tree">+</button>
+            <!-- Subtle Hero Header -->
+            <div class="my-trees-hero">
+                <div class="hero-header-row">
+                    <h2>My Family Trees</h2>
+                    <button class="add-tree-btn" id="btn-open-add-tree" title="Add or Join a Family Tree">+</button>
+                </div>
+                <p class="hero-desc">Manage all your family trees in one place. Collaborate with relatives and document your family history across generations.</p>
             </div>
-            <p>Here are all the family trees you have participated in:</p>
-            <div id="my-trees-list"></div>
+
+            <!-- Family Memories Banner -->
+            <div class="memories-banner">
+                <p class="memories-quote">"Every family has a story. Preserve yours."</p>
+                <span class="memories-author">— Family Tree Builder</span>
+            </div>
+
+            <!-- Modern Statistics Cards Grid -->
+            <div class="mytrees-stats-grid">
+                <div class="mytrees-stat-card">
+                    <span class="stat-icon">🌳</span>
+                    <div class="stat-info">
+                        <span class="stat-val" id="stat-trees-count">0</span>
+                        <span class="stat-lbl">Trees Joined</span>
+                    </div>
+                </div>
+                <div class="mytrees-stat-card">
+                    <span class="stat-icon">👨‍👩‍👧‍👦</span>
+                    <div class="stat-info">
+                        <span class="stat-val" id="stat-members-count">0</span>
+                        <span class="stat-lbl">Total Members</span>
+                    </div>
+                </div>
+                <div class="mytrees-stat-card">
+                    <span class="stat-icon">✍️</span>
+                    <div class="stat-info">
+                        <span class="stat-val" id="stat-contributors-count">0</span>
+                        <span class="stat-lbl">Contributors</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter Toolbar -->
+            <div class="mytrees-toolbar">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="mytrees-search" placeholder="Search trees by name..." autocomplete="off">
+                </div>
+                <div class="filter-pills" id="mytrees-filters">
+                    <button class="filter-pill active" data-filter="all">All</button>
+                    <button class="filter-pill" data-filter="recent">Recently Active</button>
+                    <button class="filter-pill" data-filter="owner">Created By Me</button>
+                    <button class="filter-pill" data-filter="members">Most Members</button>
+                </div>
+            </div>
+
+            <!-- Family Trees Grid List -->
+            <div id="my-trees-list" class="my-trees-grid"></div>
+
             <button class="back-btn mt-20" id="btn-mytrees-back">Back to Dashboard</button>
         </section>
 
         <!-- 3. TREE SETTINGS PAGE VIEW -->
         <section id="page-settings" class="page-section" style="display: none;">
-            <h2>Tree Settings</h2>
-            <div class="settings-grid">
-                <div class="settings-left">
-                    <h3>Modify Tree Details</h3>
-                    <form id="settings-details-form">
-                        <div class="form-group">
-                            <label>Change Tree Name</label>
-                            <input type="text" id="settings-tree-name" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Change Tree Password (Optional)</label>
-                            <input type="password" id="settings-tree-pw" placeholder="Leave blank to keep current">
-                        </div>
-                        <div class="form-group">
-                            <label>Relationship Rules (Tree Type)</label>
-                            <div class="radio-group" style="flex-direction: column; gap: 8px;">
-                                <label style="font-weight: normal; cursor: pointer; display: flex; align-items: flex-start; gap: 8px;">
-                                    <input type="radio" name="settings-tree-type" value="family" id="tree-type-family" checked style="width: auto; margin-top: 4px;">
-                                    <span>
-                                        <strong>Standard Family Tree Mode</strong><br>
-                                        <small style="color: #666;">Prevents circular ancestry loops (a person cannot be their own ancestor/descendant).</small>
-                                    </span>
-                                </label>
-                                <label style="font-weight: normal; cursor: pointer; display: flex; align-items: flex-start; gap: 8px; margin-top: 8px;">
-                                    <input type="radio" name="settings-tree-type" value="mythology" id="tree-type-mythology" style="width: auto; margin-top: 4px;">
-                                    <span>
-                                        <strong>Mythology / Fiction Mode</strong><br>
-                                        <small style="color: #666;">Allows symbolic, fictional, or circular relationships (e.g. self-ancestry loops).</small>
-                                    </span>
-                                </label>
+            <div class="settings-title-row">
+                <h2>Tree Settings & Dashboard</h2>
+            </div>
+            
+            <div class="settings-dashboard-layout">
+                <!-- LEFT COLUMN: Configurations & Backups -->
+                <div class="settings-col-left">
+                    <!-- Tree Details -->
+                    <div class="settings-card">
+                        <h3>Modify Tree Details</h3>
+                        <form id="settings-details-form">
+                            <div class="form-group">
+                                <label>Family Tree Name</label>
+                                <input type="text" id="settings-tree-name" required>
                             </div>
+                            <div class="form-group">
+                                <label>Family Description / Motto</label>
+                                <textarea id="settings-tree-desc" rows="3" placeholder="e.g. The Smith family tree documents four generations and preserves our family history."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Change Tree Password (Optional)</label>
+                                <input type="password" id="settings-tree-pw" placeholder="Leave blank to keep current">
+                            </div>
+                            <div class="form-group">
+                                <label>Relationship Rules (Tree Type)</label>
+                                <div class="radio-group-vertical">
+                                    <label class="radio-label-item">
+                                        <input type="radio" name="settings-tree-type" value="family" id="tree-type-family" checked>
+                                        <div class="radio-text">
+                                            <strong>Standard Family Tree Mode</strong>
+                                            <span class="radio-help">Prevents circular ancestry loops (a person cannot be their own ancestor/descendant).</span>
+                                        </div>
+                                    </label>
+                                    <label class="radio-label-item">
+                                        <input type="radio" name="settings-tree-type" value="mythology" id="tree-type-mythology">
+                                        <div class="radio-text">
+                                            <strong>Mythology / Fiction Mode</strong>
+                                            <span class="radio-help">Allows symbolic, fictional, or circular relationships (e.g. self-ancestry loops).</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="submit-btn">Save Settings</button>
+                        </form>
+                    </div>
+
+                    <!-- Backup & Portability -->
+                    <div class="settings-card">
+                        <h3>Backup & Portability</h3>
+                        <p class="card-subtitle-help">Download your family tree structure or restore it from a JSON backup.</p>
+                        <button class="action-btn" id="btn-export-tree">Export Tree (JSON)</button>
+                        
+                        <div class="import-section-card">
+                            <h4>Import Tree Data</h4>
+                            <div class="form-group">
+                                <input type="file" id="import-file-input" accept=".json">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="import-tree-name" placeholder="New Tree Name for Import">
+                            </div>
+                            <div class="form-group">
+                                <input type="password" id="import-tree-pw" placeholder="New Tree Password">
+                            </div>
+                            <div class="form-group">
+                                <label>Relationship Rules for Import</label>
+                                <select id="import-tree-type" class="form-select">
+                                    <option value="family">Standard Family Tree Mode</option>
+                                    <option value="mythology">Mythology / Fiction Mode</option>
+                                </select>
+                            </div>
+                            <button class="action-btn" id="btn-import-tree">Import Now</button>
                         </div>
-                        <button type="submit" class="submit-btn">Save Settings</button>
-                    </form>
-                    <hr class="divider">
-                    <h3>Backup & Portability</h3>
-                    <button class="action-btn" id="btn-export-tree">📤 Export Tree (JSON)</button>
-                    <div class="import-section">
-                        <h4>Import Tree Data</h4>
-                        <div class="form-group">
-                            <input type="file" id="import-file-input" accept=".json">
-                        </div>
-                        <div class="form-group">
-                            <input type="text" id="import-tree-name" placeholder="New Tree Name for Import">
-                        </div>
-                        <div class="form-group">
-                            <input type="password" id="import-tree-pw" placeholder="New Tree Password">
-                        </div>
-                        <div class="form-group">
-                            <label>Relationship Rules for Import</label>
-                            <select id="import-tree-type" style="width: 100%; padding: 10px; border-radius: 4px; border: 1px solid var(--border-light);">
-                                <option value="family">Standard Family Tree Mode</option>
-                                <option value="mythology">Mythology / Fiction Mode</option>
-                            </select>
-                        </div>
-                        <button class="action-btn" id="btn-import-tree">📥 Import Now</button>
                     </div>
                 </div>
-                <div class="settings-right" id="settings-stats-view">
-                    <h3>Display Statistics</h3>
-                    <!-- Dynamically populated stats -->
+
+                <!-- RIGHT COLUMN: Analytics, Activities & Danger Zone -->
+                <div class="settings-col-right">
+                    <!-- Tree Overview -->
+                    <div class="settings-card theme-highlight-card">
+                        <div class="overview-header">
+                            <span class="overview-avatar">🌳</span>
+                            <div>
+                                <h3 id="overview-tree-name">-</h3>
+                                <span class="badge" id="overview-tree-type">-</span>
+                            </div>
+                        </div>
+                        <div class="overview-meta-info">
+                            <p><strong>Created:</strong> <span id="overview-created-date">-</span></p>
+                            <p><strong>Last Updated:</strong> <span id="overview-updated-date">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Family Statistics -->
+                    <div class="settings-card">
+                        <h3>Family Statistics</h3>
+                        <div class="stats-pills-list">
+                            <div class="stats-pill-item">
+                                <span class="pill-icon">👨‍👩‍👧‍👦</span>
+                                <span class="pill-label">Members</span>
+                                <span class="pill-value" id="stats-val-members">0</span>
+                            </div>
+                            <div class="stats-pill-item">
+                                <span class="pill-icon">🌳</span>
+                                <span class="pill-label">Generations</span>
+                                <span class="pill-value" id="stats-val-generations">0</span>
+                            </div>
+                            <div class="stats-pill-item">
+                                <span class="pill-icon">🔗</span>
+                                <span class="pill-label">Relationships</span>
+                                <span class="pill-value" id="stats-val-relations">0</span>
+                            </div>
+                            <div class="stats-pill-item">
+                                <span class="pill-icon">✍️</span>
+                                <span class="pill-label">Contributors</span>
+                                <span class="pill-value" id="stats-val-contributors">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Family Health Widget -->
+                    <div class="settings-card">
+                        <h3>Tree Completeness</h3>
+                        <p class="card-subtitle-help">Ensure details are preserved across members. Populate bios, birthdates, and pictures.</p>
+                        <div class="completeness-bars">
+                            <div class="progress-bar-group">
+                                <div class="progress-header">
+                                    <span>Photos Added</span>
+                                    <span id="completeness-photos-lbl">0%</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" id="completeness-photos-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-bar-group">
+                                <div class="progress-header">
+                                    <span>Birth Dates</span>
+                                    <span id="completeness-birthdays-lbl">0%</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" id="completeness-birthdays-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-bar-group">
+                                <div class="progress-header">
+                                    <span>Contact Info</span>
+                                    <span id="completeness-contacts-lbl">0%</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" id="completeness-contacts-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="progress-bar-group">
+                                <div class="progress-header">
+                                    <span>Biographies</span>
+                                    <span id="completeness-bios-lbl">0%</span>
+                                </div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" id="completeness-bios-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contributors List -->
+                    <div class="settings-card">
+                        <h3>Contributors</h3>
+                        <div class="contributors-list-view" id="settings-contributors-list">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Recent Changes -->
+                    <div class="settings-card">
+                        <h3>Recent Changes</h3>
+                        <div class="activity-timeline" id="settings-activity-timeline">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Danger Zone -->
+                    <div class="settings-card danger-zone-card">
+                        <h3>Danger Zone</h3>
+                        <p class="card-subtitle-help">Warning: Irreversible and destructive operations. Only available to the owner of the tree.</p>
+                        <div class="danger-actions-list">
+                            <div class="danger-action-row">
+                                <div class="danger-action-text">
+                                    <strong>Purge Tree Data</strong>
+                                    <span>Deletes all persons and relationships but keeps the tree name and password configuration.</span>
+                                </div>
+                                <button class="danger-btn" id="btn-purge-tree-data">Purge Data</button>
+                            </div>
+                            <div class="danger-action-row">
+                                <div class="danger-action-text">
+                                    <strong>Transfer Tree Ownership</strong>
+                                    <span>Hand over the owner keys and admin capabilities to another contributor.</span>
+                                    <input type="email" id="transfer-owner-email" placeholder="New owner's email address" class="danger-input">
+                                </div>
+                                <button class="danger-btn" id="btn-transfer-tree-owner">Transfer</button>
+                            </div>
+                            <div class="danger-action-row">
+                                <div class="danger-action-text">
+                                    <strong>Delete Family Tree</strong>
+                                    <span>Permanently deletes the entire tree, all contributors, profiles, and snapshot records forever.</span>
+                                </div>
+                                <button class="danger-btn delete-btn-large" id="btn-delete-entire-tree">Delete Tree</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <button class="back-btn mt-20" id="btn-settings-back">Back to Dashboard</button>
@@ -759,7 +1009,7 @@
     </footer>
 
     <!-- Main JS Application Logic -->
-    <script src="app.js?v=1.2"></script>
+    <script src="app.js?v=1.6"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const toggleBtn = document.getElementById("theme-toggle");

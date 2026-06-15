@@ -8,6 +8,7 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "family_tree.db")
 def get_connection():
     """Returns a connection to the SQLite database."""
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -25,7 +26,8 @@ def init_db():
         password_hash TEXT NOT NULL,
         created_at TEXT NOT NULL,
         created_by INTEGER,
-        tree_type TEXT DEFAULT 'family'
+        tree_type TEXT DEFAULT 'family',
+        description TEXT
     )
     """)
 
@@ -130,6 +132,12 @@ def init_db():
         # Ensure tree_type column exists for existing databases (migration)
     try:
         cursor.execute("ALTER TABLE FamilyTrees ADD COLUMN tree_type TEXT DEFAULT 'family'")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass # Column already exists
+
+    try:
+        cursor.execute("ALTER TABLE FamilyTrees ADD COLUMN description TEXT")
         conn.commit()
     except sqlite3.OperationalError:
         pass # Column already exists
@@ -367,8 +375,10 @@ def get_contributor_trees(contributor_email: str):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT ft.id, ft.tree_name, ft.created_at, 
-               (SELECT COUNT(*) FROM Persons p WHERE p.tree_id = ft.id AND p.is_deleted = 0) as member_count
+        SELECT ft.id, ft.tree_name, ft.created_at, ft.created_by,
+               (SELECT COUNT(*) FROM Persons p WHERE p.tree_id = ft.id AND p.is_deleted = 0) as member_count,
+               (SELECT COUNT(*) FROM TreeContributors tc2 WHERE tc2.tree_id = ft.id) as contributor_count,
+               (SELECT MAX(timestamp) FROM ChangeHistory ch WHERE ch.tree_id = ft.id) as last_activity_at
         FROM FamilyTrees ft
         JOIN TreeContributors tc ON ft.id = tc.tree_id
         JOIN Contributors c ON tc.contributor_id = c.id
@@ -377,6 +387,40 @@ def get_contributor_trees(contributor_email: str):
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+# Tree Settings and Destructive Actions
+def delete_family_tree(tree_id: int):
+    """Deletes a family tree. SQLite foreign key cascade handles clearing related tables."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM FamilyTrees WHERE id = ?", (tree_id,))
+    conn.commit()
+    conn.close()
+
+def clear_family_tree_data(tree_id: int):
+    """Clears all dynamic data (persons, relationships, changes, snapshots) inside a tree."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM Persons WHERE tree_id = ?", (tree_id,))
+    cursor.execute("DELETE FROM Relationships WHERE tree_id = ?", (tree_id,))
+    cursor.execute("DELETE FROM ChangeHistory WHERE tree_id = ?", (tree_id,))
+    cursor.execute("DELETE FROM TreeSnapshots WHERE tree_id = ?", (tree_id,))
+    conn.commit()
+    conn.close()
+
+def transfer_tree_ownership(tree_id: int, new_owner_email: str):
+    """Transfers the ownership of the tree to another contributor by email."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM Contributors WHERE email = ?", (new_owner_email.strip(),))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        raise ValueError("Contributor not found with that email address.")
+    new_owner_id = row["id"]
+    cursor.execute("UPDATE FamilyTrees SET created_by = ? WHERE id = ?", (new_owner_id, tree_id))
+    conn.commit()
+    conn.close()
 
 # Log History
 def log_change(tree_id: int, contributor_id: int, person_id: int, action: str, details: str):
@@ -393,13 +437,15 @@ def log_change(tree_id: int, contributor_id: int, person_id: int, action: str, d
 
 # Stats
 def get_tree_stats(tree_id: int):
-    """Fetches key statistics of the tree."""
+    """Fetches key statistics of the tree, including completeness metrics and contributor details."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT tree_type FROM FamilyTrees WHERE id = ?", (tree_id,))
-    tree_type_row = cursor.fetchone()
-    tree_type = tree_type_row["tree_type"] if tree_type_row else "family"
+    cursor.execute("SELECT tree_type, created_at, description FROM FamilyTrees WHERE id = ?", (tree_id,))
+    tree_row = cursor.fetchone()
+    tree_type = tree_row["tree_type"] if tree_row else "family"
+    created_at = tree_row["created_at"] if tree_row else "N/A"
+    description = tree_row["description"] if tree_row else ""
 
     cursor.execute("SELECT COUNT(*) FROM Persons WHERE tree_id = ? AND is_deleted = 0", (tree_id,))
     total_members = cursor.fetchone()[0]
@@ -413,13 +459,105 @@ def get_tree_stats(tree_id: int):
     cursor.execute("SELECT MAX(timestamp) FROM ChangeHistory WHERE tree_id = ?", (tree_id,))
     last_updated = cursor.fetchone()[0]
 
+    # Calculate completeness percentages
+    photos_count = 0
+    birthdays_count = 0
+    contact_count = 0
+    bios_count = 0
+    if total_members > 0:
+        cursor.execute("SELECT COUNT(*) FROM Persons WHERE tree_id = ? AND is_deleted = 0 AND photo_path IS NOT NULL AND photo_path != ''", (tree_id,))
+        photos_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM Persons WHERE tree_id = ? AND is_deleted = 0 AND birth_date IS NOT NULL AND birth_date != ''", (tree_id,))
+        birthdays_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM Persons WHERE tree_id = ? AND is_deleted = 0 AND (email IS NOT NULL AND email != '' OR phone IS NOT NULL AND phone != '' OR address IS NOT NULL AND address != '')", (tree_id,))
+        contact_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM Persons WHERE tree_id = ? AND is_deleted = 0 AND biography IS NOT NULL AND biography != ''", (tree_id,))
+        bios_count = cursor.fetchone()[0]
+
+    photos_pct = round((photos_count / total_members * 100)) if total_members > 0 else 0
+    birthdays_pct = round((birthdays_count / total_members * 100)) if total_members > 0 else 0
+    contact_pct = round((contact_count / total_members * 100)) if total_members > 0 else 0
+    bios_pct = round((bios_count / total_members * 100)) if total_members > 0 else 0
+
+    # Get contributors details
+    cursor.execute("""
+        SELECT c.name, c.email, 
+               CASE WHEN ft.created_by = c.id THEN 'Owner' ELSE 'Editor' END as role
+        FROM Contributors c
+        JOIN TreeContributors tc ON c.id = tc.contributor_id
+        JOIN FamilyTrees ft ON tc.tree_id = ft.id
+        WHERE tc.tree_id = ?
+    """, (tree_id,))
+    contributors_list = [dict(r) for r in cursor.fetchall()]
+
+    # Get recent changes
+    cursor.execute("""
+        SELECT c.name as contributor_name, ch.action, ch.details, ch.timestamp
+        FROM ChangeHistory ch
+        JOIN Contributors c ON ch.contributor_id = c.id
+        WHERE ch.tree_id = ?
+        ORDER BY ch.timestamp DESC
+        LIMIT 5
+    """, (tree_id,))
+    recent_changes = [dict(r) for r in cursor.fetchall()]
+
+    # Calculate generations count
+    cursor.execute("SELECT id FROM Persons WHERE tree_id = ? AND is_deleted = 0", (tree_id,))
+    member_ids = {r["id"] for r in cursor.fetchall()}
+    
+    cursor.execute("""
+        SELECT person1_id, person2_id 
+        FROM Relationships 
+        WHERE tree_id = ? AND relationship_type = 'parent-child'
+    """, (tree_id,))
+    parent_child_edges = cursor.fetchall()
+    
+    # parent -> list of children
+    adj = {m: [] for m in member_ids}
+    indegree = {m: 0 for m in member_ids}
+    
+    for edge in parent_child_edges:
+        parent = edge["person1_id"]
+        child = edge["person2_id"]
+        if parent in adj and child in adj:
+            adj[parent].append(child)
+            indegree[child] += 1
+            
+    # Topological level calculation
+    levels = {m: 1 for m in member_ids}
+    queue = [m for m in member_ids if indegree[m] == 0]
+    
+    visited = set()
+    while queue:
+        curr = queue.pop(0)
+        if curr in visited:
+            continue
+        visited.add(curr)
+        curr_lvl = levels[curr]
+        for child in adj[curr]:
+            levels[child] = max(levels[child], curr_lvl + 1)
+            queue.append(child)
+            
+    generations_count = max(levels.values()) if levels else 0
+
     conn.close()
     return {
         "members": total_members,
         "contributors": total_contributors,
         "relationships": total_relationships,
-        "last_updated": last_updated or "N/A",
-        "tree_type": tree_type
+        "generations": generations_count,
+        "last_updated": last_updated or created_at,
+        "tree_type": tree_type,
+        "created_at": created_at,
+        "description": description or "",
+        "completeness": {
+            "photos": photos_pct,
+            "birthdays": birthdays_pct,
+            "contact": contact_pct,
+            "biographies": bios_pct
+        },
+        "contributors_list": contributors_list,
+        "recent_changes": recent_changes
     }
 
 # Person CRUD Operations
@@ -965,8 +1103,8 @@ def get_change_history(tree_id: int, limit: int = 50):
     return [dict(row) for row in rows]
 
 # Update tree settings
-def update_tree_settings(tree_id: int, new_name: str, new_password: str = None, tree_type: str = 'family'):
-    """Updates the family tree name, password, or type."""
+def update_tree_settings(tree_id: int, new_name: str, new_password: str = None, tree_type: str = 'family', description: str = None):
+    """Updates the family tree name, password, type, or description."""
     if tree_type == 'family' and has_cycle(tree_id):
         raise ValueError("Cannot switch to Standard Family Tree mode because the tree currently contains circular parent-child relationships.")
 
@@ -974,9 +1112,9 @@ def update_tree_settings(tree_id: int, new_name: str, new_password: str = None, 
     cursor = conn.cursor()
     if new_password:
         h = hash_password(new_password)
-        cursor.execute("UPDATE FamilyTrees SET tree_name = ?, password_hash = ?, tree_type = ? WHERE id = ?", (new_name, h, tree_type, tree_id))
+        cursor.execute("UPDATE FamilyTrees SET tree_name = ?, password_hash = ?, tree_type = ?, description = ? WHERE id = ?", (new_name, h, tree_type, description, tree_id))
     else:
-        cursor.execute("UPDATE FamilyTrees SET tree_name = ?, tree_type = ? WHERE id = ?", (new_name, tree_type, tree_id))
+        cursor.execute("UPDATE FamilyTrees SET tree_name = ?, tree_type = ?, description = ? WHERE id = ?", (new_name, tree_type, description, tree_id))
     conn.commit()
     conn.close()
 

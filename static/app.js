@@ -7,6 +7,7 @@ let network = null; // Vis.js Network instance\
 let currentPersonUpdatedAt = null; // Concurrency checking timestamp
 let collapsedNodeIds = new Set();  // Collapsed branch trackers
 let pendingAuth = null; // Stores { name, email, password } during OTP verification
+let myTreesData = []; // Cache list of contributor trees for filtering and searching
 
 
 // Photo cache & helper utilities for Canvas rendering
@@ -373,6 +374,9 @@ function setupEventListeners() {
     document.getElementById("settings-details-form").addEventListener("submit", handleUpdateTreeSettings);
     document.getElementById("btn-export-tree").addEventListener("click", triggerJSONExport);
     document.getElementById("btn-import-tree").addEventListener("click", handleImportTree);
+    document.getElementById("btn-purge-tree-data").addEventListener("click", handlePurgeTreeData);
+    document.getElementById("btn-transfer-tree-owner").addEventListener("click", handleTransferOwnership);
+    document.getElementById("btn-delete-entire-tree").addEventListener("click", handleDeleteEntireTree);
 
     // Deceased toggle show Date of Death input field
     document.getElementById("p-edit-deceased").addEventListener("change", (e) => {
@@ -386,6 +390,24 @@ function setupEventListeners() {
         const email = e.target.value.trim();
         signupEmailTimer = setTimeout(() => checkEmailAvailability(email, "signup-email-status"), 500);
     });
+
+    // My Trees Search & Filter event listeners
+    const searchInput = document.getElementById("mytrees-search");
+    if (searchInput) {
+        searchInput.addEventListener("input", filterAndRenderMyTrees);
+    }
+    
+    const filterContainer = document.getElementById("mytrees-filters");
+    if (filterContainer) {
+        filterContainer.addEventListener("click", (e) => {
+            const btn = e.target.closest(".filter-pill");
+            if (!btn) return;
+            
+            filterContainer.querySelectorAll(".filter-pill").forEach(p => p.classList.remove("active"));
+            btn.classList.add("active");
+            filterAndRenderMyTrees();
+        });
+    }
 }
 
 // Tab Switching
@@ -727,32 +749,130 @@ async function loadMyTrees() {
     try {
         const res = await fetch(`/api/trees/my-trees?email=${auth.contributor_email}`);
         const trees = await res.json();
-        const container = document.getElementById("my-trees-list");
-        container.innerHTML = "";
+        myTreesData = trees;
         
         const backBtn = document.getElementById("btn-mytrees-back");
         if (backBtn) {
             backBtn.style.display = (auth && auth.tree_id) ? "inline-block" : "none";
         }
         
-        trees.forEach(t => {
-            const card = document.createElement("div");
-            card.className = "landing-card";
-            card.style.marginBottom = "15px";
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h4>🌳 ${t.tree_name}</h4>
-                        <small>Members: ${t.member_count} | Created: ${t.created_at.substring(0, 10)}</small>
-                    </div>
-                    <button class="back-btn" onclick="enterSpecificTree(${t.id}, '${t.tree_name}')">Enter Tree</button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
+        // Calculate and set stats
+        const totalTrees = myTreesData.length;
+        const totalMembers = myTreesData.reduce((sum, t) => sum + (t.member_count || 0), 0);
+        const totalContributors = myTreesData.reduce((sum, t) => sum + (t.contributor_count || 1), 0);
+        
+        const treesCountEl = document.getElementById("stat-trees-count");
+        if (treesCountEl) treesCountEl.textContent = totalTrees;
+        
+        const membersCountEl = document.getElementById("stat-members-count");
+        if (membersCountEl) membersCountEl.textContent = totalMembers;
+        
+        const contributorsCountEl = document.getElementById("stat-contributors-count");
+        if (contributorsCountEl) contributorsCountEl.textContent = totalContributors;
+        
+        // Reset search inputs
+        const searchInput = document.getElementById("mytrees-search");
+        if (searchInput) searchInput.value = "";
+        
+        const filterContainer = document.getElementById("mytrees-filters");
+        if (filterContainer) {
+            filterContainer.querySelectorAll(".filter-pill").forEach(p => p.classList.remove("active"));
+            const allPill = filterContainer.querySelector('[data-filter="all"]');
+            if (allPill) allPill.classList.add("active");
+        }
+        
+        // Render
+        filterAndRenderMyTrees();
     } catch (err) {
         showFeedback("Failed to load joined trees.", "error");
     }
+}
+
+function filterAndRenderMyTrees() {
+    const searchInput = document.getElementById("mytrees-search");
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    
+    const activePill = document.querySelector("#mytrees-filters .filter-pill.active");
+    const filterVal = activePill ? activePill.getAttribute("data-filter") : "all";
+    
+    let filtered = [...myTreesData];
+    
+    // 1. Search filter
+    if (query) {
+        filtered = filtered.filter(t => t.tree_name.toLowerCase().includes(query));
+    }
+    
+    // 2. Pill category / sort
+    if (filterVal === "recent") {
+        filtered.sort((a, b) => {
+            const timeA = new Date(a.last_activity_at || a.created_at).getTime();
+            const timeB = new Date(b.last_activity_at || b.created_at).getTime();
+            return timeB - timeA;
+        });
+    } else if (filterVal === "owner") {
+        if (auth && auth.contributor_id) {
+            filtered = filtered.filter(t => t.created_by === auth.contributor_id);
+        }
+    } else if (filterVal === "members") {
+        filtered.sort((a, b) => (b.member_count || 0) - (a.member_count || 0));
+    }
+    
+    const container = document.getElementById("my-trees-list");
+    if (!container) return;
+    container.innerHTML = "";
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="mytrees-empty-state">
+                <span class="empty-icon">🌳</span>
+                <p>No family trees found matching your criteria.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    filtered.forEach(t => {
+        const estGenerations = t.member_count > 0 ? Math.max(1, Math.floor(t.member_count / 12) + 1) : 0;
+        
+        let dateStr = "Created recently";
+        const targetDate = t.last_activity_at || t.created_at;
+        if (targetDate) {
+            const d = new Date(targetDate);
+            if (!isNaN(d.getTime())) {
+                dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+        }
+        
+        const card = document.createElement("div");
+        card.className = "tree-rich-card";
+        card.innerHTML = `
+            <div>
+                <div class="tree-card-header">
+                    <span class="tree-icon-wrapper">🌳</span>
+                    <h3>${t.tree_name}</h3>
+                </div>
+                <div class="tree-card-stats">
+                    <div class="tree-stat-item">
+                        <span class="stat-num">${t.member_count || 0}</span>
+                        <span class="stat-name">Members</span>
+                    </div>
+                    <div class="tree-stat-item">
+                        <span class="stat-num">${estGenerations}</span>
+                        <span class="stat-name">Generations</span>
+                    </div>
+                    <div class="tree-stat-item">
+                        <span class="stat-num">${t.contributor_count || 1}</span>
+                        <span class="stat-name">Contributors</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tree-card-footer">
+                <span class="update-time">${t.last_activity_at ? 'Updated' : 'Created'}: ${dateStr}</span>
+                <button class="tree-enter-btn" onclick="enterSpecificTree(${t.id}, '${t.tree_name.replace(/'/g, "\\'")}')">Enter Tree</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
 }
 
 function enterSpecificTree(treeId, treeName) {
@@ -764,12 +884,14 @@ function enterSpecificTree(treeId, treeName) {
 }
 
 async function loadSettings() {
-    document.getElementById("settings-tree-name").value = auth.tree_name;
+    if (!auth || !auth.tree_id) return;
+    
+    document.getElementById("settings-tree-name").value = auth.tree_name || "";
     document.getElementById("settings-tree-pw").value = "";
     
-    // Load Stats
     try {
         const res = await fetch(`/api/trees/${auth.tree_id}/stats`);
+        if (!res.ok) throw new Error("Failed to fetch stats.");
         const stats = await res.json();
         
         // Select active Tree Type setting
@@ -778,34 +900,128 @@ async function loadSettings() {
         } else {
             document.getElementById("tree-type-family").checked = true;
         }
-
-        const container = document.getElementById("settings-stats-view");
-        container.innerHTML = `
-            <h3>Display Statistics</h3>
-            <div class="stat-item">
-                <div class="stat-val">${stats.members}</div>
-                <div class="stat-lbl">Total Members</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-val">${stats.contributors}</div>
-                <div class="stat-lbl">Total Contributors</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-val">${stats.relationships}</div>
-                <div class="stat-lbl">Total Relationships</div>
-            </div>
-            <p><strong>Last Updated:</strong> ${stats.last_updated.substring(0, 19).replace('T', ' ')}</p>
-        `;
+        
+        // Populate Tree description/motto
+        const descInput = document.getElementById("settings-tree-desc");
+        if (descInput) descInput.value = stats.description || "";
+        
+        // Populate Overview Card
+        const ovName = document.getElementById("overview-tree-name");
+        if (ovName) ovName.innerText = auth.tree_name || "-";
+        
+        const ovType = document.getElementById("overview-tree-type");
+        if (ovType) ovType.innerText = stats.tree_type === "mythology" ? "Mythology Mode" : "Standard Family Tree Mode";
+        
+        const ovCreated = document.getElementById("overview-created-date");
+        if (ovCreated) ovCreated.innerText = stats.created_at ? stats.created_at.substring(0, 10) : "-";
+        
+        const ovUpdated = document.getElementById("overview-updated-date");
+        if (ovUpdated) ovUpdated.innerText = stats.last_updated ? stats.last_updated.substring(0, 19).replace('T', ' ') : "-";
+        
+        // Populate Family Statistics
+        const statMembers = document.getElementById("stats-val-members");
+        if (statMembers) statMembers.innerText = stats.members || 0;
+        
+        const statGen = document.getElementById("stats-val-generations");
+        if (statGen) statGen.innerText = stats.generations || 0;
+        
+        const statRelations = document.getElementById("stats-val-relations");
+        if (statRelations) statRelations.innerText = stats.relationships || 0;
+        
+        const statContrib = document.getElementById("stats-val-contributors");
+        if (statContrib) statContrib.innerText = stats.contributors || 0;
+        
+        // Populate Family Health / Completeness Bars
+        const compPhotosLbl = document.getElementById("completeness-photos-lbl");
+        const compPhotosFill = document.getElementById("completeness-photos-fill");
+        if (compPhotosLbl) compPhotosLbl.innerText = (stats.completeness.photos || 0) + "%";
+        if (compPhotosFill) compPhotosFill.style.width = (stats.completeness.photos || 0) + "%";
+        
+        const compBirthdaysLbl = document.getElementById("completeness-birthdays-lbl");
+        const compBirthdaysFill = document.getElementById("completeness-birthdays-fill");
+        if (compBirthdaysLbl) compBirthdaysLbl.innerText = (stats.completeness.birthdays || 0) + "%";
+        if (compBirthdaysFill) compBirthdaysFill.style.width = (stats.completeness.birthdays || 0) + "%";
+        
+        const compContactsLbl = document.getElementById("completeness-contacts-lbl");
+        const compContactsFill = document.getElementById("completeness-contacts-fill");
+        if (compContactsLbl) compContactsLbl.innerText = (stats.completeness.contact || 0) + "%";
+        if (compContactsFill) compContactsFill.style.width = (stats.completeness.contact || 0) + "%";
+        
+        const compBiosLbl = document.getElementById("completeness-bios-lbl");
+        const compBiosFill = document.getElementById("completeness-bios-fill");
+        if (compBiosLbl) compBiosLbl.innerText = (stats.completeness.biographies || 0) + "%";
+        if (compBiosFill) compBiosFill.style.width = (stats.completeness.biographies || 0) + "%";
+        
+        // Populate Contributors List
+        const contribContainer = document.getElementById("settings-contributors-list");
+        if (contribContainer) {
+            contribContainer.innerHTML = stats.contributors_list.map(c => `
+                <div class="contributor-item-row">
+                    <div class="contrib-info">
+                        <div class="contrib-avatar">${(c.name || "?").charAt(0).toUpperCase()}</div>
+                        <div>
+                            <div class="contrib-name">${c.name || "Anonymous"}</div>
+                            <small style="color: var(--text-muted); font-size: 11px;">${c.email}</small>
+                        </div>
+                    </div>
+                    <span class="contrib-role ${c.role.toLowerCase()}">${c.role}</span>
+                </div>
+            `).join("");
+        }
+        
+        // Populate Recent Changes
+        const timelineContainer = document.getElementById("settings-activity-timeline");
+        if (timelineContainer) {
+            if (stats.recent_changes && stats.recent_changes.length > 0) {
+                timelineContainer.innerHTML = stats.recent_changes.map(ch => {
+                    const timeFormatted = ch.timestamp ? ch.timestamp.substring(0, 19).replace('T', ' ') : "";
+                    return `
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <strong>${ch.contributor_name || "Unknown"}</strong>: ${ch.action}
+                                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${ch.details || ""}</div>
+                            </div>
+                            <div class="timeline-meta">${timeFormatted}</div>
+                        </div>
+                    `;
+                }).join("");
+            } else {
+                timelineContainer.innerHTML = `<p style="font-size: 13px; color: var(--text-muted); font-style: italic; margin-left: 10px;">No recent activity logged.</p>`;
+            }
+        }
+        
+        // Check ownership & configure Danger Zone
+        const isOwner = stats.contributors_list.some(c => c.email.toLowerCase() === auth.contributor_email.toLowerCase() && c.role === "Owner");
+        if (isOwner) {
+            document.querySelectorAll(".danger-zone-card button, .danger-zone-card input").forEach(el => el.disabled = false);
+            const warningText = document.getElementById("danger-zone-owner-warning");
+            if (warningText) warningText.style.display = "none";
+        } else {
+            document.querySelectorAll(".danger-zone-card button, .danger-zone-card input").forEach(el => el.disabled = true);
+            let warningText = document.getElementById("danger-zone-owner-warning");
+            if (!warningText) {
+                warningText = document.createElement("div");
+                warningText.id = "danger-zone-owner-warning";
+                warningText.className = "info-alert";
+                warningText.style.marginTop = "12px";
+                warningText.innerText = "Only the owner of this tree can perform danger zone actions.";
+                const actionsList = document.querySelector(".danger-actions-list");
+                if (actionsList) actionsList.appendChild(warningText);
+            }
+            if (warningText) warningText.style.display = "block";
+        }
     } catch (err) {
-        showFeedback("Failed to load statistics.", "error");
+        showFeedback(err.message || "Failed to load statistics.", "error");
     }
 }
 
 async function handleUpdateTreeSettings(e) {
     e.preventDefault();
-    const new_name = document.getElementById("settings-tree-name").value;
+    const new_name = document.getElementById("settings-tree-name").value.trim();
     const new_password = document.getElementById("settings-tree-pw").value;
     const tree_type = document.querySelector('input[name="settings-tree-type"]:checked').value;
+    const description = document.getElementById("settings-tree-desc").value;
 
     try {
         const res = await fetch(`/api/trees/${auth.tree_id}/settings`, {
@@ -815,7 +1031,8 @@ async function handleUpdateTreeSettings(e) {
                 new_name,
                 new_password: new_password || null,
                 contributor_id: auth.contributor_id,
-                tree_type
+                tree_type,
+                description
             })
         });
         if (!res.ok) {
@@ -828,6 +1045,88 @@ async function handleUpdateTreeSettings(e) {
         loadSettings();
     } catch (err) {
         showFeedback(err.message || "Failed to update settings.", "error");
+    }
+}
+
+async function handlePurgeTreeData() {
+    if (!confirm("Are you sure you want to purge all data in this family tree? This deletes all members, photos, and relationships, and is completely irreversible!")) return;
+    
+    try {
+        const res = await fetch(`/api/trees/${auth.tree_id}/clear-data`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contributor_id: auth.contributor_id })
+        });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || "Failed to purge tree data.");
+        }
+        showFeedback("All family tree data has been purged successfully!");
+        loadSettings();
+    } catch (err) {
+        showFeedback(err.message || "Failed to purge tree data.", "error");
+    }
+}
+
+async function handleTransferOwnership() {
+    const email = document.getElementById("transfer-owner-email").value.trim();
+    if (!email) {
+        showFeedback("Please enter a new owner's email address.", "error");
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to transfer ownership of this tree to '${email}'? You will lose admin privileges and become an editor.`)) return;
+    
+    try {
+        const res = await fetch(`/api/trees/${auth.tree_id}/transfer-ownership`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                contributor_id: auth.contributor_id,
+                new_owner_email: email
+            })
+        });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || "Failed to transfer ownership.");
+        }
+        showFeedback(`Tree ownership transferred to ${email} successfully!`);
+        document.getElementById("transfer-owner-email").value = "";
+        loadSettings();
+    } catch (err) {
+        showFeedback(err.message || "Failed to transfer ownership.", "error");
+    }
+}
+
+async function handleDeleteEntireTree() {
+    if (!confirm("CRITICAL WARNING: Are you sure you want to permanently delete this entire tree? This deletes the tree itself, all members, relationships, contributions, and snapshot history. THIS CANNOT BE UNDONE!")) return;
+    
+    const confirmName = prompt("Please type the name of this family tree to confirm deletion:");
+    if (!confirmName) return;
+    if (confirmName.trim() !== auth.tree_name) {
+        showFeedback("Confirmation tree name did not match. Deletion canceled.", "error");
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/api/trees/${auth.tree_id}?contributor_id=${auth.contributor_id}`, {
+            method: "DELETE"
+        });
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || "Failed to delete tree.");
+        }
+        showFeedback(`Family tree '${auth.tree_name}' has been deleted.`);
+        
+        // Reset active tree selection
+        auth.tree_id = null;
+        auth.tree_name = null;
+        localStorage.setItem("auth", JSON.stringify(auth));
+        
+        // Redirect to My Trees
+        showPage("my_trees");
+    } catch (err) {
+        showFeedback(err.message || "Failed to delete tree.", "error");
     }
 }
 
@@ -2114,7 +2413,7 @@ async function handleImportTree() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    tree_name: importName.strip(),
+                    tree_name: importName.trim(),
                     password: importPw,
                     creator_name: auth.contributor_name,
                     creator_email: auth.contributor_email,
@@ -2129,7 +2428,7 @@ async function handleImportTree() {
             const out = await res.json();
             
             auth.tree_id = out.tree_id;
-            auth.tree_name = importName.strip();
+            auth.tree_name = importName.trim();
             localStorage.setItem("auth", JSON.stringify(auth));
             
             selectedPersonId = out.selected_person_id;
